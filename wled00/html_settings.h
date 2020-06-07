@@ -300,7 +300,8 @@ name="M11" maxlength="64"><br>12: <input name="M12" maxlength="64"><br>13:
 <input name="MB" type="number" min="0" max="16" required><br>
 Alexa On/Off Macros: <input name="A0" type="number" min="0" max="16" required> 
 <input name="A1" type="number" min="0" max="16" required><br>Button Macro: 
-<input name="MP" type="number" min="0" max="16" required> Long Press: <input 
+<input name="MP" type="number" min="0" max="16" required><br>Long Press: <input 
+name="ML" type="number" min="0" max="16" required><br>Double Press: <input 
 name="MD" type="number" min="0" max="16" required><br>Countdown-Over Macro: 
 <input name="MC" type="number" min="0" max="16" required><br>
 Timed-Light-Over Macro: <input name="MN" type="number" min="0" max="16" 
