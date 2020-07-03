@@ -7,6 +7,9 @@
 
 #include "wled.h"
 
+//#define FFT_SAMPLING_LOG
+//#define MIC_SAMPLING_LOG
+
 #ifndef ESP8266
   TaskHandle_t FFT_Task;
 #endif
@@ -89,7 +92,9 @@ void getSample() {
   if (userVar1 == 0) samplePeak = 0;
   if (sample > (sampleAvg+maxVol) && millis() > (peakTime + 300)) {   // Poor man's beat detection by seeing if sample > Average + some value.
     samplePeak = 1;                                                   // Then we got a peak, else we don't. Display routines need to reset the samplepeak value in case they miss the trigger.
+#ifndef ESP8266    
     udpSamplePeak = 1;
+#endif    
     userVar1 = samplePeak;
     peakTime=millis();
   }
@@ -189,7 +194,7 @@ void agcAvg() {                                                       // A simpl
   double fftResult[16];
   int noise[] = {1233,	1327,	1131,	1008,	1059,	996,	981,	973,	967,	983,	957,	957,	955,	957,	960,	976}; //ESP32 noise - run on quite evn, record FFTResults - by Yariv-H
   int pinknoise[] = {7922,	6427,	3448,	1645,	1535,	2116,	2729,	1710,	2174,	2262,	2039,	2604,	2848,	2768,	2343,	2188}; //ESP32 pink noise - by Yariv-H
-  int maxChannel[] = {73873,	82224,	84988,	52898,	51754,	51221,	38814,	31443,	29154, 26204,	23953,	23022,	16982,	19399,	14790,	15612.59}; //playing sin wave 0-20khz pick the max value for each channel - by Yariv-H
+  int maxChannel[] = {73873/2,	82224/2,	84988/2,	52898/2,	51754/2,	51221/2,	38814/2,	31443/2,	29154/2, 26204/2,	23953/2,	23022/2,	16982/2,	19399/2,	14790/2,	15612/2}; //playing sin wave 0-20khz pick the max value for each channel - by Yariv-H
 
   // Create FFT object
   arduinoFFT FFT = arduinoFFT( vReal, vImag, samples, samplingFrequency );
@@ -273,8 +278,7 @@ void agcAvg() {                                                       // A simpl
 
       //Remove noise by Yariv-H
       for(int i=0; i< 16; i++) {
-          if(fftResult[i]-pinknoise[i] < 0 ) fftResult[i]=0;
-          fftResult[i]-=pinknoise[i];
+          if(fftResult[i]-pinknoise[i] < 0 ) {fftResult[i]=0;} else {fftResult[i]-=pinknoise[i];}
           fftResult[i] = constrain(map(fftResult[i], 0,  maxChannel[i], 0, 254),0,254);
           if(fftResult[i]<0) fftResult[i]=0;
       }
@@ -282,3 +286,34 @@ void agcAvg() {                                                       // A simpl
 }
 
 #endif
+
+void logAudio() {
+
+#ifdef MIC_SAMPLING_LOG
+  //------------ Oscilloscope output ---------------------------
+    Serial.print(targetAgc); Serial.print(" ");
+    Serial.print(multAgc); Serial.print(" ");
+    Serial.print(sampleAgc); Serial.print(" ");
+
+    Serial.print(sample); Serial.print(" ");
+    Serial.print(sampleAvg); Serial.print(" ");
+    Serial.print(micLev); Serial.print(" ");
+    Serial.print(samplePeak); Serial.print(" ");    //samplePeak = 0;
+    Serial.print(micIn); Serial.print(" ");
+    Serial.print(100); Serial.print(" ");
+    Serial.print(0); Serial.print(" ");
+    Serial.println(" ");
+  #ifndef ESP8266                                   // if we are on a ESP32
+    Serial.print("running on core ");               // identify core
+    Serial.println(xPortGetCoreID());
+  #endif
+#endif
+
+#ifdef FFT_SAMPLING_LOG
+    for(int i=0; i<16; i++) {
+      Serial.print((int)constrain(fftResult[i],0,254));
+      Serial.print(" ");
+    }
+    Serial.println("");
+#endif
+}
