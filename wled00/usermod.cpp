@@ -24,6 +24,7 @@ void userSetup()
 // Define the FFT Task and lock it to core 0
 xTaskCreatePinnedToCore(
       FFTcode,                          // Function to implement the task
+      //FFTTunedcode,                          // Function to implement the task
       "FFT",                            // Name of the task
       10000,                            // Stack size in words
       NULL,                             // Task input parameter
