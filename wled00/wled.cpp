@@ -14,8 +14,11 @@ WLED::WLED()
 void WLED::reset()
 {
   briT = 0;
+  #ifdef WLED_ENABLE_WEBSOCKETS
+  ws.closeAll(1012);
+  #endif
   long dly = millis();
-  while (millis() - dly < 250) {
+  while (millis() - dly < 450) {
     yield();        // enough time to send response to client
   }
   setAllLeds();
@@ -51,6 +54,7 @@ void WLED::loop()
   handleDMX();
 #endif
   userLoop();
+  usermods.loop();
 
   yield();
   handleIO();
@@ -93,36 +97,31 @@ void WLED::loop()
     if (lastMqttReconnectAttempt > millis()) rolloverMillis++; //millis() rolls over every 50 days
     initMqtt();
   }
+  yield();
+  handleWs();
 
 // DEBUG serial logging
 #ifdef WLED_DEBUG
   if (millis() - debugTime > 9999) {
     DEBUG_PRINTLN("---DEBUG INFO---");
-    DEBUG_PRINT("Runtime: ");
-    DEBUG_PRINTLN(millis());
-    DEBUG_PRINT("Unix time: ");
-    DEBUG_PRINTLN(now());
-    DEBUG_PRINT("Free heap: ");
-    DEBUG_PRINTLN(ESP.getFreeHeap());
-    DEBUG_PRINT("Wifi state: ");
-    DEBUG_PRINTLN(WiFi.status());
+    DEBUG_PRINT("Runtime: ");       DEBUG_PRINTLN(millis());
+    DEBUG_PRINT("Unix time: ");     DEBUG_PRINTLN(now());
+    DEBUG_PRINT("Free heap: ");     DEBUG_PRINTLN(ESP.getFreeHeap());
+    DEBUG_PRINT("Wifi state: ");    DEBUG_PRINTLN(WiFi.status());
+
     if (WiFi.status() != lastWifiState) {
       wifiStateChangedTime = millis();
     }
     lastWifiState = WiFi.status();
-    DEBUG_PRINT("State time: ");
-    DEBUG_PRINTLN(wifiStateChangedTime);
-    DEBUG_PRINT("NTP last sync: ");
-    DEBUG_PRINTLN(ntpLastSyncTime);
-    DEBUG_PRINT("Client IP: ");
-    DEBUG_PRINTLN(WiFi.localIP());
-    DEBUG_PRINT("Loops/sec: ");
-    DEBUG_PRINTLN(loops / 10);
+    DEBUG_PRINT("State time: ");    DEBUG_PRINTLN(wifiStateChangedTime);
+    DEBUG_PRINT("NTP last sync: "); DEBUG_PRINTLN(ntpLastSyncTime);
+    DEBUG_PRINT("Client IP: ");     DEBUG_PRINTLN(WiFi.localIP());
+    DEBUG_PRINT("Loops/sec: ");     DEBUG_PRINTLN(loops / 10);
     loops = 0;
     debugTime = millis();
   }
   loops++;
-#endif        // WLED_DEBU
+#endif        // WLED_DEBUG
 }
 
 void WLED::setup()
@@ -156,6 +155,7 @@ void WLED::setup()
   int heapPreAlloc = ESP.getFreeHeap();
   DEBUG_PRINT("heap ");
   DEBUG_PRINTLN(ESP.getFreeHeap());
+  registerUsermods();
 
   strip.init(EEPROM.read(372), ledCount, EEPROM.read(2204));        // init LEDs quickly
   strip.setBrightness(0);
@@ -174,6 +174,7 @@ void WLED::setup()
   loadSettingsFromEEPROM(true);
   beginStrip();
   userSetup();
+  usermods.setup();
   if (strcmp(clientSSID, DEFAULT_CLIENT_SSID) == 0)
     showWelcomePage = true;
   WiFi.persistent(false);
@@ -292,6 +293,10 @@ void WLED::initAP(bool resetAP)
 
 void WLED::initConnection()
 {
+  #ifdef WLED_ENABLE_WEBSOCKETS
+  ws.onEvent(wsEvent);
+  #endif
+
   WiFi.disconnect(true);        // close old connections
 #ifdef ESP8266
   WiFi.setPhyMode(WIFI_PHY_MODE_11N);
@@ -462,6 +467,7 @@ void WLED::handleConnection()
     DEBUG_PRINTLN(WiFi.localIP());
     initInterfaces();
     userConnected();
+    usermods.connected();
 
     // shut down AP
     if (apBehavior != AP_BEHAVIOR_ALWAYS && apActive) {

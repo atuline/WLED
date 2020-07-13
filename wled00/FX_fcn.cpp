@@ -136,6 +136,7 @@ void WS2812FX::setPixelColor(uint16_t i, byte r, byte g, byte b, byte w)
     }
   }
   
+  //reorder channels to selected order
   RgbwColor col;
   switch (colorOrder)
   {
@@ -407,7 +408,12 @@ uint8_t WS2812FX::getMaxSegments(void) {
 
 uint8_t WS2812FX::getMainSegmentId(void) {
   if (mainSegment >= MAX_NUM_SEGMENTS) return 0;
-  return mainSegment;
+  if (_segments[mainSegment].isActive()) return mainSegment;
+  for (uint8_t i = 0; i < MAX_NUM_SEGMENTS; i++) //get first active
+  {
+    if (_segments[i].isActive()) return i;
+  }
+  return 0;
 }
 
 uint32_t WS2812FX::getColor(void) {
@@ -535,11 +541,14 @@ void WS2812FX::setShowCallback(show_callback cb)
 
 void WS2812FX::setTransitionMode(bool t)
 {
-  _segment_index = getMainSegmentId();
-  SEGMENT.setOption(SEG_OPTION_TRANSITIONAL, t);
-  if (!t) return;
   unsigned long waitMax = millis() + 20; //refresh after 20 ms if transition enabled
-  if (SEGMENT.mode == FX_MODE_STATIC && SEGENV.next_time > waitMax) SEGENV.next_time = waitMax;
+  for (uint16_t i = 0; i < MAX_NUM_SEGMENTS; i++)
+  {
+    _segment_index = i;
+    SEGMENT.setOption(SEG_OPTION_TRANSITIONAL, t);
+
+    if (t && SEGMENT.mode == FX_MODE_STATIC && SEGENV.next_time > waitMax) SEGENV.next_time = waitMax;
+  }
 }
 
 /*
@@ -740,26 +749,28 @@ void WS2812FX::handle_palette(void)
   _segment_index_palette_last = _segment_index;
 
   byte paletteIndex = SEGMENT.palette;
-  if (SEGMENT.mode == FX_MODE_GLITTER && paletteIndex == 0) paletteIndex = 11;
+  if (paletteIndex == 0) //default palette. Differs depending on effect
+  {
+    switch (SEGMENT.mode)
+    {
+      case FX_MODE_FIRE_2012  : paletteIndex = 35; break; //heat palette
+      case FX_MODE_COLORWAVES : paletteIndex = 26; break; //landscape 33
+      case FX_MODE_FILLNOISE8 : paletteIndex =  9; break; //ocean colors
+      case FX_MODE_NOISE16_1  : paletteIndex = 20; break; //Drywet
+      case FX_MODE_NOISE16_2  : paletteIndex = 43; break; //Blue cyan yellow
+      case FX_MODE_NOISE16_3  : paletteIndex = 35; break; //heat palette
+      case FX_MODE_NOISE16_4  : paletteIndex = 26; break; //landscape 33
+      case FX_MODE_GLITTER    : paletteIndex = 11; break; //rainbow colors
+      case FX_MODE_SUNRISE    : paletteIndex = 35; break; //heat palette
+      case FX_MODE_FLOW       : paletteIndex =  6; break; //party
+    }
+  }
   if (SEGMENT.mode >= FX_MODE_METEOR && paletteIndex == 0) paletteIndex = 4;
   
   switch (paletteIndex)
   {
-    case 0: {//default palette. Differs depending on effect
-      switch (SEGMENT.mode)
-      {
-        case FX_MODE_FIRE_2012  : load_gradient_palette(22); break;//heat palette
-        case FX_MODE_COLORWAVES : load_gradient_palette(13); break;//landscape 33
-        case FX_MODE_FILLNOISE8 : targetPalette = OceanColors_p;         break;
-        case FX_MODE_NOISE16_1  : load_gradient_palette(17); break;//Drywet
-        case FX_MODE_NOISE16_2  : load_gradient_palette(30); break;//Blue cyan yellow
-        case FX_MODE_NOISE16_3  : load_gradient_palette(22); break;//heat palette
-        case FX_MODE_NOISE16_4  : load_gradient_palette(13); break;//landscape 33
-        //case FX_MODE_GLITTER    : targetPalette = RainbowColors_p;       break;
-        
-        default: targetPalette = PartyColors_p; break;//palette, bpm
-      }
-      break;}
+    case 0: //default palette. Exceptions for specific effects above
+      targetPalette = PartyColors_p; break;
     case 1: {//periodically replace palette with a random one. Doesn't work with multiple FastLED segments
       if (!singleSegmentMode)
       {
@@ -811,7 +822,7 @@ void WS2812FX::handle_palette(void)
     case 12: //Rainbow stripe colors
       targetPalette = RainbowStripeColors_p; break;
     default: //progmem palettes
-      load_gradient_palette(SEGMENT.palette -13);
+      load_gradient_palette(paletteIndex -13);
   }
   
   if (singleSegmentMode && paletteFade) //only blend if just one segment uses FastLED mode

@@ -10,13 +10,25 @@
 #define DEFAULT_AP_PASS     "wled1234"
 #define DEFAULT_OTA_PASS    "wledota"
 
+//increase if you need more
+#define WLED_MAX_USERMODS 4
+
+//Usermod IDs
+#define USERMOD_ID_RESERVED       0            //Unused. Might indicate no usermod present
+#define USERMOD_ID_UNSPECIFIED    1            //Default value for a general user mod that does not specify a custom ID
+#define USERMOD_ID_EXAMPLE        2            //Usermod "usermod_v2_example.h"
+#define USERMOD_ID_TEMPERATURE    3            //Usermod "usermod_temperature.h"
+#define USERMOD_ID_FIXNETSERVICES 4            //Usermod "usermod_Fix_unreachable_netservices.h"
+#define USERMOD_ID_PIRSWITCH      5            //Usermod "usermod_PIR_sensor_switch.h"
+#define USERMOD_ID_IMU            6            //Usermod "usermod_mpu6050_imu.h"
+
 //Access point behavior
 #define AP_BEHAVIOR_BOOT_NO_CONN  0            //Open AP when no connection after boot
 #define AP_BEHAVIOR_NO_CONN       1            //Open when no connection (either after boot or if connection is lost)
 #define AP_BEHAVIOR_ALWAYS        2            //Always open
 #define AP_BEHAVIOR_BUTTON_ONLY   3            //Only when button pressed for 6 sec
 
-//Notifier callMode 
+//Notifier callMode
 #define NOTIFIER_CALL_MODE_INIT           0    //no updates on init, can be used to disable updates
 #define NOTIFIER_CALL_MODE_DIRECT_CHANGE  1
 #define NOTIFIER_CALL_MODE_BUTTON         2
@@ -33,7 +45,7 @@
 #define RGBW_MODE_MANUAL_ONLY     0            //No automatic white channel calculation. Manual white channel slider
 #define RGBW_MODE_AUTO_BRIGHTER   1            //New algorithm. Adds as much white as the darkest RGBW channel
 #define RGBW_MODE_AUTO_ACCURATE   2            //New algorithm. Adds as much white as the darkest RGBW channel and subtracts this amount from each RGB channel
-#define RGBW_MODE_DUAL            3            //Manual slider + auto calculation. Automatically calculates only if manual slider is set to off (0)  
+#define RGBW_MODE_DUAL            3            //Manual slider + auto calculation. Automatically calculates only if manual slider is set to off (0)
 #define RGBW_MODE_LEGACY          4            //Old floating algorithm. Too slow for realtime and palette support
 
 //realtime modes
@@ -44,6 +56,7 @@
 #define REALTIME_MODE_E131        4
 #define REALTIME_MODE_ADALIGHT    5
 #define REALTIME_MODE_ARTNET      6
+#define REALTIME_MODE_TPM2NET     7
 
 //realtime override modes
 #define REALTIME_OVERRIDE_NONE    0
@@ -89,6 +102,12 @@
 #define SEG_OPTION_PAUSED         3            //unused
 #define SEG_OPTION_NONUNITY       4            //Indicates that the effect does not use FRAMETIME or needs getPixelColor
 #define SEG_OPTION_TRANSITIONAL   7
+
+//Timer mode types
+#define NL_MODE_SET               0            //After nightlight time elapsed, set to target brightness
+#define NL_MODE_FADE              1            //Fade to target brightness gradually
+#define NL_MODE_COLORFADE         2            //Fade to target brightness and secondary color gradually
+#define NL_MODE_SUN               3            //Sunrise/sunset. Target brightness is set immediately, then Sunrise effect is started. Max 60 min.
 
 //EEPROM size
 #ifdef ESP8266
