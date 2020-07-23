@@ -49,6 +49,7 @@ void userLoop() {
       getSample();                                              // Sample the microphone
       agcAvg();                                                 // Calculated the PI adjusted value as sampleAvg
       myVals[millis()%32] = sampleAgc;
+      removeLogarithmicNoise();
       logAudio();
     }
     #ifndef ESP8266

@@ -9,6 +9,8 @@
 
 //#define FFT_SAMPLING_LOG
 //#define MIC_SAMPLING_LOG
+//#define FFT_LOG_NOISELESS_SAMPLING_LOG
+
 
 #ifndef ESP8266
   TaskHandle_t FFT_Task;
@@ -179,7 +181,14 @@ void agcAvg() {                                                       // A simpl
 
   // This is used for normalization of the result bins. It was created by sending the results of a signal generator to within 6" of a MAX9814 @ 40db gain.
   // This is the maximum raw results for each of the result bins and is used for normalization of the results.
+  
+  //  uint16_t maxChannel[] = {124116, 167260, 105086, 82806, 61050, 48343, 41005, 32086, 25305, 23022, 18737, 15658, 11294, 9818, 7377, 6284};
+  //  int logarithmicNoise[16] = {120, 117, 110, 107, 105,  112,  98,  102, 112,  106, 103, 99,  99,  102, 103, 102 };
+  
   uint16_t maxChannel[] = {26000,  44000,  66000,  72000,  60000,  48000,  41000,  30000,  25000, 22000, 16000,  14000,  10000,  8000,  7000,  5000}; // Find maximum value for each bin with MAX9814 @ 40db gain.
+  int logarithmicNoise[16] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+  
+  double fftResultLogarithmicNoiseless[16];
   
   float avgChannel[16];    // This is a smoothed rolling average value for each bin. Experimental for AGC testing.
 
@@ -194,6 +203,18 @@ void agcAvg() {                                                       // A simpl
     }
     return result;
   }
+  double fftResultMax[16] = {0.0};
+void recordFFTMaxValue() {
+  for(int i =0; i<16; i++) {
+        fftResultMax[i]= max(fftResultMax[i],fftResult[i]);
+      }
+
+      for(int i =0; i<16; i++) {
+        Serial.print(fftResultMax[i]); Serial.print(" ");
+      }
+      
+      Serial.println(" ");
+}
 
   // FFT main code
   void FFTcode( void * parameter) {
@@ -218,18 +239,27 @@ void agcAvg() {                                                       // A simpl
         microseconds += sampling_period_us;
       }
 
-      FFT.Windowing( FFT_WIN_TYP_HAMMING, FFT_FORWARD );    // Weigh data
-      FFT.Compute( FFT_FORWARD );                           // Compute FFT
-      FFT.ComplexToMagnitude();                             // Compute magnitudes
+      
+
+      FFT.Windowing(vReal, samples, FFT_WIN_TYP_HAMMING, FFT_FORWARD );    // Weigh data
+      FFT.Compute(vReal, vImag, samples, FFT_FORWARD );                           // Compute FFT
+      FFT.ComplexToMagnitude(vReal, vImag, samples);                             // Compute magnitudes
 
       //
       // vReal[3 .. 255] contain useful data, each a 20Hz interval (60Hz - 5120Hz).
       // There could be interesting data at bins 0 to 2, but there are too many artifacts.
       //
       FFT.MajorPeak(&FFT_MajorPeak, &FFT_Magnitude);        // let the effects know which freq was most dominant
-      FFT.DCRemoval();
+      //FFT.DCRemoval();
 
-      for (int i = 0; i < samples; i++) fftBin[i] = vReal[i];   // export FFT field
+      for (int i = 0; i < samples; i++) {
+        double t = 0.0;
+        t = abs(vReal[i]);
+        t = 16*log(t);
+        fftBin[i] = t;
+      }
+
+      
 
 // Andrew's updated mapping of 256 bins down to the 16 result bins with Sample Freq = 10240, samples = 512.
 // Based on testing, the lowest/Start frequency is 60 Hz (with bin 3) and a highest/End frequency of 5120 Hz in bin 255.
@@ -256,17 +286,19 @@ void agcAvg() {                                                       // A simpl
       fftResult[14] = (fftAdd(147,194)) /48; // 2940 - 3900 -> 3500, 7000
       fftResult[15] = (fftAdd(194, 255)) /62; // 3880 - 5120 -> 4500, 5000
 
-      for(int i=0; i< 16; i++) {
-        if(fftResult[i]<0) fftResult[i]=0;
-        avgChannel[i] = ((avgChannel[i] * 31) + fftResult[i]) / 32;                         // Smoothing of each result bin. Experimental.
-        fftResult[i] = constrain(map(fftResult[i], 0,  maxChannel[i], 0, 255),0,255);       // Map result bin to 8 bits.
-//        fftResult[i] = constrain(map(fftResult[i], 0,  avgChannel[i]*2, 0, 255),0,255);   // AGC map result bin to 8 bits. Can be noisy at low volumes. Experimental.
-
-      }
+      //recordFFTMaxValue();
     }
 }
 
+
 #endif
+
+void removeLogarithmicNoise() {
+   memcpy(fftResultLogarithmicNoiseless, fftResult, sizeof(fftResult[0])*16);      
+   for(int i=0; i<16; i++) {
+      fftResultLogarithmicNoiseless[i] = fftResultLogarithmicNoiseless[i]-logarithmicNoise[i] <= 0? 0 : fftResultLogarithmicNoiseless[i]-logarithmicNoise[i];
+   }
+}
 
 void logAudio() {
 
@@ -293,6 +325,14 @@ void logAudio() {
 #ifdef FFT_SAMPLING_LOG
     for(int i=0; i<16; i++) {
       Serial.print((int)constrain(fftResult[i],0,254));
+      Serial.print(" ");
+    }
+    Serial.println("");
+#endif
+
+#ifdef FFT_LOG_NOISELESS_SAMPLING_LOG
+   for(int i=0; i<16; i++) {
+      Serial.print(fftResultLogarithmicNoiseless[i]);
       Serial.print(" ");
     }
     Serial.println("");
