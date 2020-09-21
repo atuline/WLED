@@ -118,6 +118,10 @@ void agcAvg() {                                                     // A simple 
 } // agcAvg()
 
 
+  double FFT_MajorPeak = 0;
+  double FFT_Magnitude = 0;
+  double fftResult[16];
+
 
 void logAudio() {
 
