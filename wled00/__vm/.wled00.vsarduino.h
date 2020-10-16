@@ -99,26 +99,10 @@ typedef long pthread_cond_t;
 
 #define ESP_LOGI(tag, ...)
 
+// Read Value from Register
+#define READ_PERI_REG(addr)
+// Write Value to Register
+#define WRITE_PERI_REG(addr,val)
 #include "wled00.ino"
-#include "wled01_eeprom.ino"
-#include "wled02_xml.ino"
-#include "wled03_set.ino"
-#include "wled04_file.ino"
-#include "wled05_init.ino"
-#include "wled06_usermod.ino"
-#include "wled07_notify.ino"
-#include "wled08_led.ino"
-#include "wled09_button.ino"
-#include "wled10_ntp.ino"
-#include "wled11_ol.ino"
-#include "wled12_alexa.ino"
-#include "wled13_cronixie.ino"
-#include "wled14_colors.ino"
-#include "wled15_hue.ino"
-#include "wled16_blynk.ino"
-#include "wled17_mqtt.ino"
-#include "wled18_server.ino"
-#include "wled19_json.ino"
-#include "wled20_ir.ino"
 #endif
 #endif

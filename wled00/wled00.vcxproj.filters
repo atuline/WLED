@@ -22,21 +22,15 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="wled00.ino" />
+    <None Include="data\style.css">
+      <Filter>Source Files</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="__vm\.wled00.vsarduino.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="html_classic.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="html_mobile.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="html_other.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="html_settings.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="FX.h">
@@ -171,9 +165,6 @@
     <ClInclude Include="src\dependencies\async-mqtt-client\AsyncMqttClient\Packets\SubAckPacket.hpp">
       <Filter>Header Files\Dependencies</Filter>
     </ClInclude>
-    <ClInclude Include="src\dependencies\time\Time.h">
-      <Filter>Header Files\Dependencies</Filter>
-    </ClInclude>
     <ClInclude Include="src\dependencies\time\TimeLib.h">
       <Filter>Header Files\Dependencies</Filter>
     </ClInclude>
@@ -183,79 +174,25 @@
     <ClInclude Include="src\dependencies\async-mqtt-client\AsyncMqttClient\Packets\UnsubAckPacket.hpp">
       <Filter>Header Files\Dependencies</Filter>
     </ClInclude>
-    <ClInclude Include="alexa.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="blynk.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="button.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="colors.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="const.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="cronixie.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="dmx.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="file.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="html_ui.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="hue.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="ir.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="json.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="led.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="mqtt.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="notify.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="ntp.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="overlay.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="set.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="usermod.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="wled.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="wled_eeprom.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="wled_server.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="xml.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="ir_codes.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="palettes.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="usermod_v2_empty.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\dependencies\dmx\ESPDMX.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -335,9 +272,6 @@
     <ClCompile Include="colors.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="cronixie.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="file.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -354,9 +288,6 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="mqtt.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="notify.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="ntp.cpp">
@@ -383,5 +314,38 @@
     <ClCompile Include="xml.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="wled_serial.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ws.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="usermods_list.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="udp.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="um_manager.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\dependencies\dmx\ESPDMX.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\dependencies\blynk\BlynkSimpleEsp.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="lx_parser.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="dmx.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="e131.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="board.txt" />
   </ItemGroup>
 </Project>
