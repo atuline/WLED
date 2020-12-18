@@ -332,6 +332,7 @@ void deserializeConfig() {
   JsonObject snd_cfg = sound[F("cfg")]; // Sound Reactive Configuration
   CJSON(soundSquelch, snd_cfg[F("sq")]);
   CJSON(sampleGain, snd_cfg[F("gn")]);
+  CJSON(digitalMic, snd_cfg[F("dm")]);
 
   JsonObject snd_fft = sound[F("fft")]; // FFT Settings
   CJSON(effectFFT1, snd_fft[F("f1")]);
@@ -640,6 +641,7 @@ void serializeConfig() {
   JsonObject snd_cfg = sound.createNestedObject("cfg"); // Sound Reactive Configuration
   snd_cfg[F("sq")] = soundSquelch;
   snd_cfg[F("gn")] = sampleGain;
+  snd_cfg[F("dm")] = digitalMic;
 
   JsonObject snd_fft = sound.createNestedObject("fft"); // FFT Settings
   snd_fft[F("f1")] = effectFFT1;

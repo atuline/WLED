@@ -497,6 +497,7 @@ void getSettingsJS(byte subPage, char* dest)
   {
     sappend('v',SET_F("SQ"),soundSquelch);
     sappend('v',SET_F("GN"),sampleGain);
-    }
+    sappend('c',SET_F("DM"),digitalMic);
+  }
   oappend(SET_F("}</script>"));
 }

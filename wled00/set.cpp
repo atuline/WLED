@@ -357,6 +357,8 @@ void handleSettingsSet(AsyncWebServerRequest *request, byte subPage)
 
     t = request->arg(F("GN")).toInt();
     if (t >= 0) sampleGain = t;
+
+    digitalMic = request->hasArg(F("DM"));
   }
 
   if (subPage != 6 || !doReboot) serializeConfig(); //do not save if factory reset
