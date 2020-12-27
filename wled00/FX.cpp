@@ -4567,16 +4567,16 @@ uint16_t WS2812FX::mode_waterfall(void) {                  // Waterfall. By: And
 
 uint16_t WS2812FX::mode_2DGEQ(void) {                // By Will Tatam.
    
-  int barWidth = (matrixWidth / 16);
+  int barWidth = (matrixWidth / 12);
   int bandInc = 1;
   if(barWidth == 0) {
     // Matrix narrower than fft bands
     barWidth = 1;
-    bandInc = (16 / matrixWidth);
+    bandInc = (12 / matrixWidth);
   }
 
   int b = 0;
-  for (int band = 0; band < 16; band += bandInc) {
+  for (int band = 0; band < 12; band += bandInc) {
     int count = map(fftResult[band], 0, 255, 0, matrixHeight);
     for (int w = 0; w < barWidth; w++) {
       int xpos = (barWidth * b) + w;
@@ -4592,6 +4592,43 @@ uint16_t WS2812FX::mode_2DGEQ(void) {                // By Will Tatam.
     }
     b++;
   }
+  return FRAMETIME;
+}
+
+/////////////////////////
+// ** 2D CenterBars    //
+/////////////////////////
+
+uint16_t WS2812FX::mode_2DCenterBars(void) {                // Written by Scott Marley Adapted by Will Spiro-C..
+
+  CRGB *leds = (CRGB*) ledData;
+  fadeToBlackBy(leds, SEGLEN, 255);
+  int barWidth = (matrixWidth / 12);
+  int bandInc = 1;
+  if(barWidth == 0) {
+    // Matrix narrower than fft bands
+    barWidth = 1;
+    bandInc = (12 / matrixWidth);
+  }
+
+  int b = 0;
+  for (int band = 0; band < 12; band += bandInc) {
+    int hight = map(fftResult[band], 0, 255, 0, matrixHeight);
+    if (hight % 2 == 0) hight--;
+    int yStart = ((matrixHeight - hight) / 2 );
+    for (int w = 0; w < barWidth; w++) {
+      int x = (barWidth * b) + w;
+      for (int y = yStart; y <= (yStart + hight); y++) {
+
+        //  CRGB color = CHSV((band * 35), 255, 255);
+        leds[XY(x, y)] = CHSV((band * 35), 255, 255);
+        //int colorIndex = constrain((y - yStart) * (255 / hight), 0, 255);       /// Not Working good whit all palets
+        //leds[XY(x, i)] = ColorFromPalette(currentPalette, colorIndex, 255);  ///
+      }
+    }
+    b++;
+  }
+  setPixels(leds);
   return FRAMETIME;
 }
 
@@ -4639,12 +4676,12 @@ uint16_t WS2812FX::mode_2DFunkyPlank(void) {   // Written by ??? Adapted by Will
 
   CRGB *leds = (CRGB*) ledData;
 
-  int barWidth = (matrixWidth / 16);
+  int barWidth = (matrixWidth / 12);
   int bandInc = 1;
   if(barWidth == 0) {
     // Matrix narrower than fft bands
     barWidth = 1;
-    bandInc = (16 / matrixWidth);
+    bandInc = (12 / matrixWidth);
   }
 
   uint8_t secondHand = micros()/(256-SEGMENT.speed)/500+1 % 64;
@@ -4654,7 +4691,7 @@ uint16_t WS2812FX::mode_2DFunkyPlank(void) {   // Written by ??? Adapted by Will
 
     // display values of
     int b = 0; 
-    for (int band = 0; band < 16; band += bandInc) {
+    for (int band = 0; band < 12; band += bandInc) {
       int hue = fftResult[band];
       int v = map(fftResult[band], 0, 255, 10, 255);
 //     if(hue > 0) Serial.printf("Band: %u Value: %u\n", band, hue);
