@@ -4599,7 +4599,7 @@ uint16_t WS2812FX::mode_2DGEQ(void) {                // By Will Tatam.
 // ** 2D CenterBars    //
 /////////////////////////
 
-uint16_t WS2812FX::mode_2DCenterBars(void) {                // Written by Scott Marley Adapted by Will Spiro-C..
+uint16_t WS2812FX::mode_2DCenterBars(void) {                // Written by Scott Marley Adapted by Spiro-C..
 
   CRGB *leds = (CRGB*) ledData;
   fadeToBlackBy(leds, SEGLEN, 255);
