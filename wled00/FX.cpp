@@ -4686,7 +4686,7 @@ uint16_t WS2812FX::mode_2DFunkyPlank(void) {   // Written by ??? Adapted by Will
 // ** 2D CenterBars    //
 /////////////////////////
 
-uint16_t WS2812FX::mode_2DCenterBars(void) {                // Written by Scott Marley Adapted by Will Spiro-C..
+uint16_t WS2812FX::mode_2DCenterBars(void) {                // Written by Scott Marley Adapted by  Spiro-C..
 
   CRGB *leds = (CRGB*) ledData;
   fadeToBlackBy(leds, SEGLEN, SEGMENT.speed);
