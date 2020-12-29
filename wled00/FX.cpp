@@ -4568,7 +4568,9 @@ uint16_t WS2812FX::mode_waterfall(void) {                  // Waterfall. By: And
 /////////////////////////
 
 uint16_t WS2812FX::mode_2DGEQ(void) {                // By Will Tatam.
-   
+   CRGB *leds = (CRGB*) ledData;
+  fadeToBlackBy(leds, SEGLEN, SEGMENT.speed);
+
   int barWidth = (matrixWidth / 16);
   int bandInc = 1;
   if(barWidth == 0) {
@@ -4582,18 +4584,15 @@ uint16_t WS2812FX::mode_2DGEQ(void) {                // By Will Tatam.
     int count = map(fftResult[band], 0, 255, 0, matrixHeight);
     for (int w = 0; w < barWidth; w++) {
       int xpos = (barWidth * b) + w;
-      for (int i = 0; i <= matrixHeight; i++) {
+      for (int i = 0; i <=  matrixHeight; i++) {
         if (i <= count) {
-          CRGB color = CHSV((band * 35), 255, 255);
-          setPixelColor(XY(xpos, i), color.red, color.green, color.blue);
-        }
-        else {
-          setPixelColor(XY(xpos, i), 0,0,0);
+        leds[XY(xpos, i)] = color_blend(SEGCOLOR(1), color_from_palette((band * 35), false, PALETTE_SOLID_WRAP, 0), 255);
         }
       }
     }
     b++;
   }
+  setPixels(leds);
   return FRAMETIME;
 }
 
@@ -4690,7 +4689,7 @@ uint16_t WS2812FX::mode_2DFunkyPlank(void) {   // Written by ??? Adapted by Will
 uint16_t WS2812FX::mode_2DCenterBars(void) {                // Written by Scott Marley Adapted by Will Spiro-C..
 
   CRGB *leds = (CRGB*) ledData;
-  fadeToBlackBy(leds, SEGLEN, 255);
+  fadeToBlackBy(leds, SEGLEN, SEGMENT.speed);
   int barWidth = (matrixWidth / 16);
   int bandInc = 1;
   if(barWidth == 0) {
