@@ -72,6 +72,7 @@ if (samples_read > 0) {
     digitalMic = true;
   } else {
     Serial.println("Digital microphone is NOT present.");
+    analogReadResolution(10); //Default is 12, which is less linear and also doesnt make much sense as only 10bit is used by fft.
   }
 }
 

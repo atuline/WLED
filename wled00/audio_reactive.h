@@ -141,7 +141,6 @@ void getSample() {
     DEBUGSR_PRINT(micIn); DEBUGSR_PRINT("\t"); DEBUGSR_PRINT(micData);
 /*-------END DEBUG-------*/
 
-    if (digitalMic == false) micIn = micIn >> 2;  // ESP32 has 2 more bits of A/D than ESP8266, so we need to normalize to 10 bit.
 /*---------DEBUG---------*/
     DEBUGSR_PRINT("\t\t"); DEBUGSR_PRINT(micIn);
 /*-------END DEBUG-------*/
