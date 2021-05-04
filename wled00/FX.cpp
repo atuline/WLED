@@ -5827,6 +5827,99 @@ uint16_t WS2812FX::mode_2Dmeatballs(void) {   // Metaballs by Stefan Petrick. Ca
   return FRAMETIME;
 } // mode_2Dmeatballs()
 
+/////////////////////////////////////////
+//   2D Cellular Automata Elementary   //
+/////////////////////////////////////////
+
+uint16_t WS2812FX::mode_2Dcaelementary(void) {              // Written by Ewoud Wijma, see https://en.wikipedia.org/wiki/Cellular_automaton and https://natureofcode.com/book/chapter-7-cellular-automata/
+
+  if (matrixWidth * matrixHeight > SEGLEN || matrixWidth < 4 || matrixHeight < 4) {return blink(CRGB::Red, CRGB::Black, false, false);}    // No, we're not going to overrun the segment.
+
+  static unsigned long prevMillis;
+  unsigned long curMillis = millis();
+
+  //slow down based on speed parameter
+  if ((curMillis - prevMillis) >= ((256-SEGMENT.speed))) {
+    prevMillis = curMillis;
+
+    int cellWidth = matrixWidth + 2; //2 more as cells[0] and cells[cellWidth] will stay 0
+
+    //get previous cells
+    if (!SEGENV.allocateData(sizeof(int) * cellWidth)) return mode_static(); //allocation failed
+    int* cells = reinterpret_cast<int*>(SEGENV.data);
+
+    static uint8_t prevIntensity;
+    uint8_t currIntensity = SEGMENT.intensity;
+
+    //to make the default rule an interesting one (default 128 is not interesting)
+    if (currIntensity == DEFAULT_INTENSITY)
+      currIntensity = 90;
+
+    //create ruleset 0..255 based on value of intensity parameter
+    int ruleset[8];// = {0, 1, 0, 1, 1, 0, 1, 0};
+    for (int i = 0; i < 8; i++) {
+      ruleset[7-i] = (currIntensity >> i) & 1;
+    }
+
+    //reset cells if intensity changed or if effect starts
+    if (prevIntensity != currIntensity || SEGENV.call == 0) {
+      prevIntensity = currIntensity;
+      for (int i = 0; i < cellWidth; i++) cells[i] = 0; //all cells to 0
+      cells[cellWidth / 2] = 1; //except middle cell is 1
+    }
+    else {
+
+      //calculate new generation of cells
+
+      int nextgen[cellWidth];
+      memcpy(nextgen, cells, cellWidth*sizeof(int));
+
+      for (int i = 1; i < cellWidth-1; i++) {
+        int left = cells[i-1];   // Left neighbor state
+        int me = cells[i];       // Current state
+        int right = cells[i+1];  // Right neighbor state
+
+        if (left == 1 && me == 1 && right == 1) {nextgen[i] = ruleset[0];}
+        if (left == 1 && me == 1 && right == 0) {nextgen[i] = ruleset[1];}
+        if (left == 1 && me == 0 && right == 1) {nextgen[i] = ruleset[2];}
+        if (left == 1 && me == 0 && right == 0) {nextgen[i] = ruleset[3];}
+        if (left == 0 && me == 1 && right == 1) {nextgen[i] = ruleset[4];}
+        if (left == 0 && me == 1 && right == 0) {nextgen[i] = ruleset[5];}
+        if (left == 0 && me == 0 && right == 1) {nextgen[i] = ruleset[6];}
+        if (left == 0 && me == 0 && right == 0) {nextgen[i] = ruleset[7];}
+      } 
+
+      memcpy(cells, nextgen, cellWidth*sizeof(int));
+    }
+
+    CRGB *leds = (CRGB*) ledData;
+
+    // shift all rows one up:
+    for (int i = (matrixHeight - 1); i > 0; i--) {
+      for (int j = (matrixWidth - 1); j >= 0; j--) {
+        int src = XY(j, (i - 1));
+        int dst = XY(j, i);
+        leds[dst] = leds[src];
+      }
+    }
+
+    // show the new row
+    for(int i = 1; i < cellWidth - 1; i++) {
+      if (cells[i] == 1) {
+        leds[XY(i-1, 0)] = color_blend(SEGCOLOR(1), color_from_palette(millis(), false, PALETTE_SOLID_WRAP, 0), 255);
+      }
+      else {
+        leds[XY(i-1, 0)] = CRGB(0,0,0);
+      }
+    }
+
+    setPixels(leds);
+
+  } //millis
+
+  return FRAMETIME;
+} // mode_2Dcaelementary()
+
 
 ////////////////////////////////
 //  **FFT_test                //
