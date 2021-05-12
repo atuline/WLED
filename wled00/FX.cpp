@@ -4155,8 +4155,6 @@ uint16_t WS2812FX::mode_2DJulia(void) {                           // An animated
 
   if (matrixWidth * matrixHeight > SEGLEN || matrixWidth < 4 || matrixHeight < 4) {return blink(CRGB::Red, CRGB::Black, false, false);}    // No, we're not going to overrun the segment.
 
-  CRGB *leds = (CRGB*) ledData;
-
   if (!SEGENV.allocateData(sizeof(julia))) return mode_static();  // We use this method for allocating memory for static variables.
   Julia* julias = reinterpret_cast<Julia*>(SEGENV.data);          // Because 'static' doesn't work with SEGMENTS.
 
@@ -5831,7 +5829,7 @@ uint16_t WS2812FX::mode_2Dmeatballs(void) {   // Metaballs by Stefan Petrick. Ca
 //   2D Cellular Automata Elementary   //
 /////////////////////////////////////////
 
-uint16_t WS2812FX::mode_2Dcaelementary(void) {              // Written by Ewoud Wijma, see https://en.wikipedia.org/wiki/Cellular_automaton and https://natureofcode.com/book/chapter-7-cellular-automata/
+uint16_t WS2812FX::mode_2Dcaelementary(void) {              // Written by Ewoud Wijma, see https://en.wikipedia.org/wiki/Cellular_automaton inspired by https://natureofcode.com/book/chapter-7-cellular-automata/
 
   if (matrixWidth * matrixHeight > SEGLEN || matrixWidth < 4 || matrixHeight < 4) {return blink(CRGB::Red, CRGB::Black, false, false);}    // No, we're not going to overrun the segment.
 
@@ -5839,7 +5837,7 @@ uint16_t WS2812FX::mode_2Dcaelementary(void) {              // Written by Ewoud 
   unsigned long curMillis = millis();
 
   //slow down based on speed parameter
-  if ((curMillis - prevMillis) >= ((256-SEGMENT.speed))) {
+  if (curMillis - prevMillis >= (255-SEGMENT.speed)*4) {
     prevMillis = curMillis;
 
     int cellWidth = matrixWidth + 2; //2 more as cells[0] and cells[cellWidth] will stay 0
@@ -5919,6 +5917,162 @@ uint16_t WS2812FX::mode_2Dcaelementary(void) {              // Written by Ewoud 
 
   return FRAMETIME;
 } // mode_2Dcaelementary()
+
+///////////////////////////////////////////
+//   2D Cellular Automata Game of life   //
+///////////////////////////////////////////
+
+uint16_t WS2812FX::XYZ(int x, int y, int z) {
+  return XY(x,y) + z * matrixWidth * matrixHeight;
+}
+
+uint16_t WS2812FX::mode_2Dcagameoflife(void) {              // Written by Ewoud Wijma, inspired by https://natureofcode.com/book/chapter-7-cellular-automata/ and https://github.com/DougHaber/nlife-color
+
+  if (matrixWidth * matrixHeight > SEGLEN || matrixWidth < 4 || matrixHeight < 4) {return blink(CRGB::Red, CRGB::Black, false, false);}    // No, we're not going to overrun the segment.
+
+  static unsigned long prevMillis;
+  unsigned long curMillis = millis();
+
+  //slow down based on speed parameter
+  if (curMillis - prevMillis >= (255-SEGMENT.speed)*4) { //between 0 and 1 second
+    prevMillis = curMillis;
+
+    //create array of cell matrices. array[0] is current cells, [1]..[matrixDepth-1] is round robin of previous cells
+    uint16_t matrixDepth = 5; //number of previous generations (to check if period)
+    uint16_t dataSize = sizeof(uint8_t) * matrixWidth * matrixHeight * matrixDepth;
+    if (!SEGENV.allocateData(dataSize)) return mode_static(); //allocation failed
+    uint8_t* cells = reinterpret_cast<uint8_t*>(SEGENV.data);
+
+    static unsigned long heartbeatMillis; //to calculate delay after repitition before reset
+    
+    static int previousDepth;
+
+    //reset cells if effect starts or effect stabalizes (wait 3 seconds after repitition)
+    if (SEGENV.call == 0 || (millis() - heartbeatMillis > 3000)) { 
+      heartbeatMillis = millis();
+
+      random16_set_seed(millis()); //seed the random generator
+
+      //give the cells random state and colors
+      for (int x = 0; x < matrixWidth; x++) {
+        for (int y = 0; y < matrixHeight; y++) {
+          uint8_t colorIndex = random8();
+          uint8_t state = colorIndex%2;
+          cells[XY(x,y)] = state==1?0:colorIndex;
+        }
+      }
+
+      previousDepth = 0;
+    }
+    else {
+
+      //copy previousCells
+      for (int x = 0; x < matrixWidth; x++) {
+        for (int y = 0; y < matrixHeight; y++) {
+          cells[XYZ(x,y,previousDepth)] = cells[XY(x,y)];
+        }
+      }
+
+      //calculate new generation of cells
+      for (int x = 0; x < matrixWidth; x++) {
+        for (int y = 0; y < matrixHeight; y++) {
+
+          int neighbors = 0;
+          uint8_t colorsCount[256];
+          for (int i=0; i<256; i++) colorsCount[i] = 0; //init colorsCount
+
+          for (int i = -1; i <= 1; i++) {
+            for (int j = -1; j <= 1; j++) {
+
+              uint16_t xyz = XYZ((x+i+matrixWidth)%matrixWidth, (y+j+matrixHeight)%matrixHeight, previousDepth); //cell xy to check
+
+              neighbors += cells[xyz] != 0;
+
+              if (cells[xyz] != 0) //only count colors of active cells
+                colorsCount[cells[xyz]]++;
+            }
+          }
+
+          // subtract the current cell's state
+          neighbors -= cells[XYZ(x, y, previousDepth)] != 0;
+
+          // Rules of Life
+          if      ((cells[XY(x,y)] != 0) && (neighbors <  2)) cells[XY(x,y)] = 0;           // Loneliness
+          else if ((cells[XY(x,y)] != 0) && (neighbors >  3)) cells[XY(x,y)] = 0;           // Overpopulation
+          else if ((cells[XY(x,y)] == 0) && (neighbors == 3)) cells[XY(x,y)] = random(8);           // Reproduction
+          // else do nothing!
+
+          //find dominantcolor and assign to cell
+          if (neighbors == 3) {
+            uint8_t dominantColor = 0;
+            uint8_t dominantCount = 0;
+            for (int i=0; i<256; i++) {
+              if (colorsCount[i] > dominantCount) {
+	              dominantColor = i;
+	              dominantCount = colorsCount[i];
+	            }
+            }
+            cells[XY(x,y)] = dominantColor;
+          }
+        }
+      }
+
+      //if no repetition set millis last checksum made ()
+      bool repetition = false;
+      int compareDepth = 0;
+      for (int z=0; (z < matrixDepth) && !repetition; z++) {
+
+        //start with previousDepth and round robin through the rest
+        compareDepth = (previousDepth - z + matrixDepth)%matrixDepth; //walk backwards from new to old cells
+
+        if (compareDepth != 0) {
+          //check if cells are repeating
+          repetition = true;
+          int countActiveCells = 0;
+          for (int x = 0; x < matrixWidth && repetition; x++) {
+            for (int y = 0; y < matrixHeight && repetition; y++) {
+              repetition = cells[XY(x,y)] == cells[XYZ(x, y, compareDepth)];
+              if (cells[XY(x,y)] != 0) countActiveCells++;
+            }
+          }
+          // Serial.print(compareDepth);
+          // Serial.print(":");
+          // Serial.print(repetition);
+          // Serial.print(", ");
+        }
+      }
+
+      // Serial.print(repetition);
+      // Serial.print(", ");
+      // Serial.println("");
+
+      if (!repetition) //all different
+      {
+        heartbeatMillis = millis(); // if no repetition, heartbeat is on
+      }
+    }
+
+    CRGB *leds = (CRGB*) ledData;
+
+    // show the new generation
+    for (int x = 0; x < matrixWidth; x++) {
+      for (int y = 0; y < matrixHeight; y++) {
+        if (cells[XYZ(x,y,previousDepth)] == 0 && cells[XY(x,y)] != 0) leds[XY(x,y)] = color_blend(SEGCOLOR(1), color_wheel(cells[XY(x,y)]), 192);
+        else if (cells[XY(x,y)] != 0) leds[XY(x,y)] = color_blend(SEGCOLOR(1), color_wheel(cells[XY(x,y)]), 255);
+        else if (cells[XYZ(x,y, previousDepth)] != 0 && cells[XY(x,y)] == 0) leds[XY(x,y)] = color_blend(SEGCOLOR(1), color_wheel(cells[XY(x,y)]), 64);
+        else leds[XY(x,y)] = CRGB(0,0,0); 
+      }
+    }
+
+    previousDepth++;
+    if (previousDepth >= matrixDepth) previousDepth = 1; //round robin to 1 (0 is for current cells)
+
+    setPixels(leds);
+
+  } //millis
+
+  return FRAMETIME;
+} // mode_2Dcagameoflife()
 
 
 ////////////////////////////////

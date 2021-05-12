@@ -117,7 +117,7 @@
 #define IS_REVERSE      ((SEGMENT.options & REVERSE     ) == REVERSE     )
 #define IS_SELECTED     ((SEGMENT.options & SELECTED    ) == SELECTED    )
 
-#define MODE_COUNT                     155
+#define MODE_COUNT                     156
 
 #define FX_MODE_STATIC                   0
 #define FX_MODE_BLINK                    1
@@ -274,6 +274,7 @@
 #define FX_MODE_2DJULIA                152
 #define FX_MODE_BLURZ                  153
 #define FX_MODE_2DCAELEMENTARY         154
+#define FX_MODE_2DCAGAMEOFLIFE         155
 
 class WS2812FX {
   typedef uint16_t (WS2812FX::*mode_ptr)(void);
@@ -652,6 +653,7 @@ class WS2812FX {
       _mode[FX_MODE_2DJULIA]                 = &WS2812FX::mode_2DJulia;
       _mode[FX_MODE_BLURZ]                   = &WS2812FX::mode_blurz;
      _mode[FX_MODE_2DCAELEMENTARY]          = &WS2812FX::mode_2Dcaelementary;
+     _mode[FX_MODE_2DCAGAMEOFLIFE]          = &WS2812FX::mode_2Dcagameoflife;
 
       _brightness = DEFAULT_BRIGHTNESS;
       currentPalette = CRGBPalette16(CRGB::Black);
@@ -738,7 +740,8 @@ class WS2812FX {
 //      getStripLen(uint8_t strip=0),
       triwave16(uint16_t),
       getFps(),
-      XY(int,int);
+      XY(int,int),
+      XYZ(int,int, int);
 
     uint32_t
       now,
@@ -925,7 +928,8 @@ class WS2812FX {
       mode_2DCenterBars(void),
       mode_2DJulia(void),
       mode_blurz(void),
-      mode_2Dcaelementary(void);
+      mode_2Dcaelementary(void),
+      mode_2Dcagameoflife(void);
 
   private:
     uint32_t crgb_to_col(CRGB fastled);
@@ -1024,7 +1028,7 @@ const char JSON_mode_names[] PROGMEM = R"=====([
 "* Juggles","* Matripix","* Gravimeter","* Plasmoid","* Puddles","* Midnoise","* Noisemeter","** Freqwave","** Freqmatrix","** 2D GEQ",
 "** Waterfall","** Freqpixels","** Binmap","* Noisefire","* Puddlepeak","** Noisemove","2D Plasma","Perlin Move","* Ripple Peak","2D FireNoise",
 "2D Squared Swirl","2D Fire2012","2D DNA","2D Matrix","2D Meatballs","** Freqmap","* Gravcenter","* Gravcentric","** Gravfreq","** DJ Light",
-"** 2D Funky Plank","** 2D CenterBars","2D Julia","** Blurz","2D CA Elementary"
+"** 2D Funky Plank","** 2D CenterBars","2D Julia","** Blurz","2D CA Elementary","2D CA Game of life"
 ])=====";
 
 
