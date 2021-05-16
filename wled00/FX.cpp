@@ -5922,11 +5922,12 @@ uint16_t WS2812FX::mode_2Dcaelementary(void) {              // Written by Ewoud 
 //   2D Cellular Automata Game of life   //
 ///////////////////////////////////////////
 
-uint16_t WS2812FX::XYZ(int x, int y, int z) {
-  return XY(x,y) + z * matrixWidth * matrixHeight;
-}
+typedef struct ColorCount {
+  CRGB color;
+  int8_t  count;
+} colorCount;
 
-uint16_t WS2812FX::mode_2Dcagameoflife(void) {              // Written by Ewoud Wijma, inspired by https://natureofcode.com/book/chapter-7-cellular-automata/ and https://github.com/DougHaber/nlife-color
+uint16_t WS2812FX::mode_2Dcagameoflife(void) { // Written by Ewoud Wijma, inspired by https://natureofcode.com/book/chapter-7-cellular-automata/ and https://github.com/DougHaber/nlife-color
 
   if (matrixWidth * matrixHeight > SEGLEN || matrixWidth < 4 || matrixHeight < 4) {return blink(CRGB::Red, CRGB::Black, false, false);}    // No, we're not going to overrun the segment.
 
@@ -5937,143 +5938,112 @@ uint16_t WS2812FX::mode_2Dcagameoflife(void) {              // Written by Ewoud 
   if (curMillis - prevMillis >= (255-SEGMENT.speed)*4) { //between 0 and 1 second
     prevMillis = curMillis;
 
-    //create array of cell matrices. array[0] is current cells, [1]..[matrixDepth-1] is round robin of previous cells
-    uint16_t matrixDepth = 5; //number of previous generations (to check if period)
-    uint16_t dataSize = sizeof(uint8_t) * matrixWidth * matrixHeight * matrixDepth;
-    if (!SEGENV.allocateData(dataSize)) return mode_static(); //allocation failed
-    uint8_t* cells = reinterpret_cast<uint8_t*>(SEGENV.data);
+    CRGB *leds = (CRGB*) ledData;
+    CRGB prevLeds[32*32]; //MAX_LED causes a panic, but this will do
 
-    static unsigned long heartbeatMillis; //to calculate delay after repitition before reset
+    //array of patterns. Needed to identify repeating patterns. A pattern is one iteration of leds, without the color (on/off only)
+    const int patternsSize = (matrixWidth + matrixHeight) * 2; //seems to be a good value to catch also repetition in moving patterns
+    if (!SEGENV.allocateData(sizeof(String) * patternsSize)) return mode_static(); //allocation failed
+    String* patterns = reinterpret_cast<String*>(SEGENV.data);
+    static int patternIndex; //round robin index of next slot to add pattern
+
+    CRGB backgroundColor = SEGCOLOR(1);
+
+    static unsigned long resetMillis; //triggers reset if more than 3 seconds from millis()
+
+    if (SEGENV.call == 0) { //effect starts
+      //check if no pixels on screen (there could be due to previous effect, which we then take as starting point)
+      bool allZero = true;
+      for (int x = 0; x < matrixWidth && allZero; x++) for (int y = 0; y < matrixHeight && allZero; y++)
+        if (leds[XY(x,y)].r > 10 || leds[XY(x,y)].g > 10 || leds[XY(x,y)].b > 10) //looks like some pixels are not completely off
+          allZero = false;
+      if (!allZero)
+        resetMillis = millis(); //avoid reset
+    }
     
-    static int previousDepth;
-
-    //reset cells if effect starts or effect stabalizes (wait 3 seconds after repitition)
-    if (SEGENV.call == 0 || (millis() - heartbeatMillis > 3000)) { 
-      heartbeatMillis = millis();
+    //reset leds if effect repeats (wait 3 seconds after repetition)
+    if (millis() - resetMillis > 3000) { 
+      resetMillis = millis();
 
       random16_set_seed(millis()); //seed the random generator
 
-      //give the cells random state and colors
-      for (int x = 0; x < matrixWidth; x++) {
-        for (int y = 0; y < matrixHeight; y++) {
-          uint8_t colorIndex = random8();
-          uint8_t state = colorIndex%2;
-          cells[XY(x,y)] = state==1?0:colorIndex;
-        }
+      //give the leds random state and colors (based on intensity, colors from palette or all posible colors are chosen)
+      for (int x = 0; x < matrixWidth; x++) for (int y = 0; y < matrixHeight; y++) {
+        uint8_t state = random8()%2;
+        if (state == 0)
+          leds[XY(x,y)] = backgroundColor;
+        else
+          leds[XY(x,y)] = SEGMENT.intensity < 128?(CRGB)color_wheel(random8()):CRGB(random8(), random8(), random8());
       }
 
-      previousDepth = 0;
+      //init patterns
+      patternIndex = 0;
+      for (int i=0; i<patternsSize; i++) patterns[i] = "";
     }
     else {
+      //copy previous leds
+      for (int x = 0; x < matrixWidth; x++) for (int y = 0; y < matrixHeight; y++) prevLeds[XY(x,y)] = leds[XY(x,y)];
 
-      //copy previousCells
-      for (int x = 0; x < matrixWidth; x++) {
-        for (int y = 0; y < matrixHeight; y++) {
-          cells[XYZ(x,y,previousDepth)] = cells[XY(x,y)];
-        }
-      }
+      //calculate new leds
+      for (int x = 0; x < matrixWidth; x++) for (int y = 0; y < matrixHeight; y++) {
+        colorCount colorsCount[9];//count the different colors in the 9*9 matrix
+        for (int i=0; i<9; i++) colorsCount[i] = {backgroundColor, 0}; //init colorsCount
 
-      //calculate new generation of cells
-      for (int x = 0; x < matrixWidth; x++) {
-        for (int y = 0; y < matrixHeight; y++) {
+        //iterate through neighbors and count them and their different colors
+        int neighbors = 0;
+        for (int i = -1; i <= 1; i++) for (int j = -1; j <= 1; j++) { //iterate through 9*9 matrix
+          uint16_t xy = XY((x+i+matrixWidth)%matrixWidth, (y+j+matrixHeight)%matrixHeight); //cell xy to check
 
-          int neighbors = 0;
-          uint8_t colorsCount[256];
-          for (int i=0; i<256; i++) colorsCount[i] = 0; //init colorsCount
+          // count different neighbours and colors, except the centre cell
+          if (xy != XY(x,y) && prevLeds[xy] != backgroundColor) {
+            neighbors++;
+            bool colorFound = false;
+            int i;
+            for (i=0; i<9 && colorsCount[i].count != 0; i++)
+              if (colorsCount[i].color == prevLeds[xy]) {
+                colorsCount[i].count++;
+                colorFound = true;
+              }
 
-          for (int i = -1; i <= 1; i++) {
-            for (int j = -1; j <= 1; j++) {
-
-              uint16_t xyz = XYZ((x+i+matrixWidth)%matrixWidth, (y+j+matrixHeight)%matrixHeight, previousDepth); //cell xy to check
-
-              neighbors += cells[xyz] != 0;
-
-              if (cells[xyz] != 0) //only count colors of active cells
-                colorsCount[cells[xyz]]++;
-            }
+            if (!colorFound) colorsCount[i] = {prevLeds[xy], 1}; //add new color found in the array
           }
+        } // i,j
 
-          // subtract the current cell's state
-          neighbors -= cells[XYZ(x, y, previousDepth)] != 0;
-
-          // Rules of Life
-          if      ((cells[XY(x,y)] != 0) && (neighbors <  2)) cells[XY(x,y)] = 0;           // Loneliness
-          else if ((cells[XY(x,y)] != 0) && (neighbors >  3)) cells[XY(x,y)] = 0;           // Overpopulation
-          else if ((cells[XY(x,y)] == 0) && (neighbors == 3)) cells[XY(x,y)] = random(8);           // Reproduction
-          // else do nothing!
-
+        // Rules of Life
+        if      ((leds[XY(x,y)] != backgroundColor) && (neighbors <  2)) leds[XY(x,y)] = backgroundColor; // Loneliness
+        else if ((leds[XY(x,y)] != backgroundColor) && (neighbors >  3)) leds[XY(x,y)] = backgroundColor; // Overpopulation
+        else if ((leds[XY(x,y)] == backgroundColor) && (neighbors == 3)) {                                // Reproduction
           //find dominantcolor and assign to cell
-          if (neighbors == 3) {
-            uint8_t dominantColor = 0;
-            uint8_t dominantCount = 0;
-            for (int i=0; i<256; i++) {
-              if (colorsCount[i] > dominantCount) {
-	              dominantColor = i;
-	              dominantCount = colorsCount[i];
-	            }
-            }
-            cells[XY(x,y)] = dominantColor;
-          }
+          colorCount dominantColorCount = {backgroundColor, 0};
+          for (int i=0; i<9 && colorsCount[i].count != 0; i++)
+            if (colorsCount[i].count > dominantColorCount.count) dominantColorCount = colorsCount[i];
+          if (dominantColorCount.count > 0) leds[XY(x,y)] = dominantColorCount.color; //assign the dominant color
         }
-      }
+        // else do nothing!
+      } //x,y
 
-      //if no repetition set millis last checksum made ()
+      //create new pattern
+      String pattern = "";
+      for (int x = 0; x < matrixWidth; x++) for (int y = 0; y < matrixHeight; y++)
+        pattern += leds[XY(x,y)] == backgroundColor?" ":"o"; //string representation if on/off
+
+      //check if repetition of patterns occurs
       bool repetition = false;
-      int compareDepth = 0;
-      for (int z=0; (z < matrixDepth) && !repetition; z++) {
+      for (int i=0; i<patternsSize && !repetition; i++)
+        repetition = patterns[(patternIndex - 1 - i + patternsSize)%patternsSize] == pattern;
 
-        //start with previousDepth and round robin through the rest
-        compareDepth = (previousDepth - z + matrixDepth)%matrixDepth; //walk backwards from new to old cells
+      //add current pattern to array and increase index (round robin)
+      patterns[patternIndex] = pattern;
+      patternIndex = (patternIndex+1)%patternsSize;
 
-        if (compareDepth != 0) {
-          //check if cells are repeating
-          repetition = true;
-          int countActiveCells = 0;
-          for (int x = 0; x < matrixWidth && repetition; x++) {
-            for (int y = 0; y < matrixHeight && repetition; y++) {
-              repetition = cells[XY(x,y)] == cells[XYZ(x, y, compareDepth)];
-              if (cells[XY(x,y)] != 0) countActiveCells++;
-            }
-          }
-          // Serial.print(compareDepth);
-          // Serial.print(":");
-          // Serial.print(repetition);
-          // Serial.print(", ");
-        }
-      }
-
-      // Serial.print(repetition);
-      // Serial.print(", ");
-      // Serial.println("");
-
-      if (!repetition) //all different
-      {
-        heartbeatMillis = millis(); // if no repetition, heartbeat is on
-      }
-    }
-
-    CRGB *leds = (CRGB*) ledData;
-
-    // show the new generation
-    for (int x = 0; x < matrixWidth; x++) {
-      for (int y = 0; y < matrixHeight; y++) {
-        if (cells[XYZ(x,y,previousDepth)] == 0 && cells[XY(x,y)] != 0) leds[XY(x,y)] = color_blend(SEGCOLOR(1), color_wheel(cells[XY(x,y)]), 192);
-        else if (cells[XY(x,y)] != 0) leds[XY(x,y)] = color_blend(SEGCOLOR(1), color_wheel(cells[XY(x,y)]), 255);
-        else if (cells[XYZ(x,y, previousDepth)] != 0 && cells[XY(x,y)] == 0) leds[XY(x,y)] = color_blend(SEGCOLOR(1), color_wheel(cells[XY(x,y)]), 64);
-        else leds[XY(x,y)] = CRGB(0,0,0); 
-      }
-    }
-
-    previousDepth++;
-    if (previousDepth >= matrixDepth) previousDepth = 1; //round robin to 1 (0 is for current cells)
+      if (!repetition) resetMillis = millis(); //if no repetition avoid reset
+    } //not reset
 
     setPixels(leds);
-
   } //millis
 
   return FRAMETIME;
 } // mode_2Dcagameoflife()
-
 
 ////////////////////////////////
 //  **FFT_test                //
