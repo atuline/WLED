@@ -281,7 +281,7 @@ void FFTcode( void * parameter) {
     //extern double volume;   // COMMENTED OUT - UNUSED VARIABLE COMPILER WARNINGS
 
     for(int i=0; i<samples; i++) {
-      if (digitalMic == false) {
+      if (digitalMic && dmEnabled == false) {
         micData = analogRead(audioPin);           // Analog Read
       } else {
         int32_t digitalSample = 0;
@@ -303,7 +303,7 @@ void FFTcode( void * parameter) {
       // DEBUGSR_PRINT(micDataSm);
       // DEBUGSR_PRINT("\n");
 
-      if (digitalMic == false) { while(micros() - microseconds < sampling_period_us){/*empty loop*/} }
+      if (digitalMic && dmEnabled == false) { while(micros() - microseconds < sampling_period_us){/*empty loop*/} }
 
       microseconds += sampling_period_us;
     }
