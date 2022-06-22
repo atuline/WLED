@@ -14,6 +14,19 @@ bool applyPreset(byte index, byte callMode)
 	//crude way to determine if this was called by a network request
 	#ifdef ARDUINO_ARCH_ESP32
 	core = xPortGetCoreID();
+	
+	// begin WLEDSR specific
+	//      loopTask (arduino main loop) sometimes runs on core #1
+	//if ((core == 1) && (strncmp(pcTaskGetTaskName(NULL), "loopTask", 8) == 0)) {
+	//	DEBUG_PRINTF("[applyPreset] called from loopTask on core %d; forcing core = 0\n", (int)core); 
+	//	core = 0;
+	//}
+	//      async_tcp (network requests) sometimes runs on core #0
+	if ((core == 0) && (strncmp(pcTaskGetTaskName(NULL), "async_tcp", 9) == 0)) {
+		DEBUG_PRINTF("[applyPreset] called from async_tcp on core %d; forcing core = 1\n", (int)core); 
+		core = 1;
+	}
+	// end WLEDSR specific
 	#endif
 
 	//only allow use of fileDoc from the core responsible for network requests
