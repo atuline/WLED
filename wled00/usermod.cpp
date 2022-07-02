@@ -119,7 +119,7 @@ void userLoop() {
           sampleAvg = receivedPacket.sampleAvg;
           // VERIFY THAT THIS IS A COMPATIBLE PACKET
           char packetHeader[6];
-          memcpy(&receivedPacket, packetHeader, 6);
+          memcpy(packetHeader, &receivedPacket, 6);
           if (!(isValidUdpSyncVersion(packetHeader))) {
             memcpy(&receivedPacket, fftBuff, packetSize);
             for (int i = 0; i < 32; i++ ){
