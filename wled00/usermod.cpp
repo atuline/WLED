@@ -111,17 +111,10 @@ void userLoop() {
           fftUdp.read(fftBuff, packetSize);
           audioSyncPacket receivedPacket;
           memcpy(&receivedPacket, fftBuff, packetSize);
-          for (int i = 0; i < 32; i++ ){
-            myVals[i] = receivedPacket.myVals[i];
-          }
-          sampleAgc = receivedPacket.sampleAgc;
-          sample = receivedPacket.sample;
-          sampleAvg = receivedPacket.sampleAvg;
           // VERIFY THAT THIS IS A COMPATIBLE PACKET
           char packetHeader[6];
           memcpy(packetHeader, &receivedPacket, 6);
-          if (!(isValidUdpSyncVersion(packetHeader))) {
-            memcpy(&receivedPacket, fftBuff, packetSize);
+          if (isValidUdpSyncVersion(packetHeader)) {
             for (int i = 0; i < 32; i++ ){
               myVals[i] = receivedPacket.myVals[i];
             }
