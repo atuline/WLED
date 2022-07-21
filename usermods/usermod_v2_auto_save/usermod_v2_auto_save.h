@@ -40,6 +40,7 @@ class AutoSaveUsermod : public Usermod {
     // If we've detected the need to auto save, this will be non zero.
     unsigned long autoSaveAfter = 0;
 
+    uint8_t knownInputLevel = 0;
     uint8_t knownBrightness = 0;
     uint8_t knownEffectSpeed = 0;
     uint8_t knownEffectIntensity = 0;
@@ -88,6 +89,7 @@ class AutoSaveUsermod : public Usermod {
       #endif
       initDone = true;
       if (enabled && applyAutoSaveOnBoot) applyPreset(autoSavePreset);
+      knownInputLevel = inputLevel;
       knownBrightness = bri;
       knownEffectSpeed = effectSpeed;
       knownEffectIntensity = effectIntensity;
@@ -110,7 +112,10 @@ class AutoSaveUsermod : public Usermod {
       uint8_t currentPalette = strip.getMainSegment().palette;
 
       unsigned long wouldAutoSaveAfter = now + autoSaveAfterSec*1000;
-      if (knownBrightness != bri) {
+      if (knownInputLevel != inputLevel) {
+        knownInputLevel = inputLevel;
+        autoSaveAfter = wouldAutoSaveAfter;
+      } else if (knownBrightness != bri) {
         knownBrightness = bri;
         autoSaveAfter = wouldAutoSaveAfter;
       } else if (knownEffectSpeed != effectSpeed) {
