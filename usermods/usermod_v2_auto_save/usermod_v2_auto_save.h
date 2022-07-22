@@ -40,7 +40,7 @@ class AutoSaveUsermod : public Usermod {
     // If we've detected the need to auto save, this will be non zero.
     unsigned long autoSaveAfter = 0;
 
-    uint8_t knownInputLevel = 0;
+    uint8_t knownInputLevel = 0;  //WLEDSR
     uint8_t knownBrightness = 0;
     uint8_t knownEffectSpeed = 0;
     uint8_t knownEffectIntensity = 0;
