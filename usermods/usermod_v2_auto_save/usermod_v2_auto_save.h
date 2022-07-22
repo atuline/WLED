@@ -89,7 +89,7 @@ class AutoSaveUsermod : public Usermod {
       #endif
       initDone = true;
       if (enabled && applyAutoSaveOnBoot) applyPreset(autoSavePreset);
-      knownInputLevel = inputLevel;
+      knownInputLevel = inputLevel; //WLEDSR
       knownBrightness = bri;
       knownEffectSpeed = effectSpeed;
       knownEffectIntensity = effectIntensity;
@@ -112,9 +112,9 @@ class AutoSaveUsermod : public Usermod {
       uint8_t currentPalette = strip.getMainSegment().palette;
 
       unsigned long wouldAutoSaveAfter = now + autoSaveAfterSec*1000;
-      if (knownInputLevel != inputLevel) {
-        knownInputLevel = inputLevel;
-        autoSaveAfter = wouldAutoSaveAfter;
+      if ((soundAgc == 0) && (knownInputLevel != inputLevel)) {  //begin WLEDSR
+        knownInputLevel = inputLevel; 
+        autoSaveAfter = wouldAutoSaveAfter; //end WLEDSR
       } else if (knownBrightness != bri) {
         knownBrightness = bri;
         autoSaveAfter = wouldAutoSaveAfter;
