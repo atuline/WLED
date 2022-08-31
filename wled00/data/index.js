@@ -107,48 +107,53 @@ function tglLabels()
 }
 
 function cTheme(light) {
-  if (light) {
-  sCol('--c-1','#eee');
-  sCol('--c-f','#000');
-  sCol('--c-2','#ddd');
-  sCol('--c-3','#bbb');
-  sCol('--c-4','#aaa');
-  sCol('--c-5','#999');
-  sCol('--c-6','#999');
-  sCol('--c-8','#888');
-  sCol('--c-b','#444');
-  sCol('--c-c','#333');
-  sCol('--c-e','#111');
-  sCol('--c-d','#222');
-  sCol('--c-r','#c42');
-  sCol('--c-o','rgba(204, 204, 204, 0.9)');
-  sCol('--c-sb','#0003'); sCol('--c-sbh','#0006');
-  sCol('--c-tb','rgba(204, 204, 204, var(--t-b))');
-  sCol('--c-tba','rgba(170, 170, 170, var(--t-b))');
-  sCol('--c-tbh','rgba(204, 204, 204, var(--t-b))');
-  d.getElementById('imgw').style.filter = "invert(0.8)";
-  } else {
-  sCol('--c-1','#111');
-  sCol('--c-f','#fff');
-  sCol('--c-2','#222');
-  sCol('--c-3','#333');
-  sCol('--c-4','#444');
-  sCol('--c-5','#555');
-  sCol('--c-6','#666');
-  sCol('--c-8','#888');
-  sCol('--c-b','#bbb');
-  sCol('--c-c','#ccc');
-  sCol('--c-e','#eee');
-  sCol('--c-d','#ddd');
-  sCol('--c-r','#831');
-  sCol('--c-o','rgba(34, 34, 34, 0.9)');
-  sCol('--c-sb','#fff3'); sCol('--c-sbh','#fff5');
-  sCol('--c-tb','rgba(34, 34, 34, var(--t-b))');
-  sCol('--c-tba','rgba(102, 102, 102, var(--t-b))');
-  sCol('--c-tbh','rgba(51, 51, 51, var(--t-b))');
-  d.getElementById('imgw').style.filter = "unset";
-  }
+	if (light) {
+		sCol('--c-1','#f5f5f5'); // Background Color
+		sCol('--c-f','#000000'); // Text / Icon Color
+		sCol('--c-2','#DBDBDB'); // DropDown Box Color
+		sCol('--c-3','#EAEAEA'); // Loading WLED / Button Background Color
+		sCol('--c-4','#009FE2'); // Slider Background Color
+		sCol('--c-5','#DBDBDB'); // Active Effect background Color
+		sCol('--c-6','#DBDBDB'); // Checkbox Color
+		sCol('--c-8','#888'); // IDK NOT USED
+		sCol('--c-b','#646464'); // MINI Text Color
+		sCol('--c-c','#636363'); // Not Active Icon Color
+		sCol('--c-e','#fff'); // Hover Icon Color
+		sCol('--c-d','#636363'); // Text Color and Brightness Icon
+		sCol('--c-r','#831'); // IDK NOT USED
+		sCol('--c-o','rgba(34, 34, 34, 0.9)'); // INFO Background should have Alpha
+		sCol('--c-sb','#fff3'); // SCROLL BAR
+    sCol('--c-sbh','#fff5'); // SCROLL BAR HOVER
+		sCol('--c-tb','#fff'); // NAV AND MENU BAR
+		sCol('--c-tba','#009FE2'); // NAV AND MENU BAR ACTIVE TABS
+		sCol('--c-tbh','rgba(0, 159, 226, 0.8)'); // NAV AND MENU BAR HOVER TABS
+    sCol('--bg','#fff'); // NAV AND MENU BAR HOVER TABS
+		d.getElementById('imgw').style.filter = "unset";
+	} else { // default dark theme
+		sCol('--c-1','#f5f5f5'); // Background Color
+		sCol('--c-f','#000000'); // Text / Icon Color
+		sCol('--c-2','#DBDBDB'); // DropDown Box Color
+		sCol('--c-3','#EAEAEA'); // Loading WLED / Button Background Color
+		sCol('--c-4','#009FE2'); // Slider Background Color
+		sCol('--c-5','#DBDBDB'); // Active Effect background Color
+		sCol('--c-6','#DBDBDB'); // Checkbox Color
+		sCol('--c-8','#888'); // IDK NOT USED
+		sCol('--c-b','#646464'); // MINI Text Color
+		sCol('--c-c','#636363'); // Not Active Icon Color
+		sCol('--c-e','#fff'); // Hover Icon Color
+		sCol('--c-d','#636363'); // Text Color and Brightness Icon
+		sCol('--c-r','#831'); // IDK NOT USED
+		sCol('--c-o','rgba(34, 34, 34, 0.9)'); // INFO Background should have Alpha
+		sCol('--c-sb','#fff3'); // SCROLL BAR
+    sCol('--c-sbh','#fff5'); // SCROLL BAR HOVER
+		sCol('--c-tb','#fff'); // NAV AND MENU BAR
+		sCol('--c-tba','#009FE2'); // NAV AND MENU BAR ACTIVE TABS
+		sCol('--c-tbh','rgba(0, 159, 226, 0.8)'); // NAV AND MENU BAR HOVER TABS
+    sCol('--bg','#fff'); // NAV AND MENU BAR HOVER TABS
+		d.getElementById('imgw').style.filter = "unset";
+	}
 }
+
 
 function loadBg(iUrl) {
   let bg = d.getElementById('bg');

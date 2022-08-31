@@ -1,8 +1,8 @@
 body {
   font-family: Verdana, sans-serif;
   text-align: center;
-  background: #222;
-  color: #fff;
+  background: #f5f5f5;
+  color: #000;
   line-height: 200%%; /* %% because of AsyncWebServer */
   margin: 0;
 }
@@ -14,14 +14,14 @@ a {
   text-decoration: none;
 }
 button, .btn {
-  background: #333;
-  color: #fff;
+  background: #009FE2;
+  color: #000;
   font-family: Verdana, sans-serif;
-  border: 0.3ch solid #333;
+  border: none;
   display: inline-block;
   font-size: 20px;
   margin: 12px 8px 8px;
-  padding: 1px 6px;
+  padding: 5px 10px;
   cursor: pointer;
   text-decoration: none;
 }
@@ -37,10 +37,10 @@ button.disabled, button[disabled] {
   width: 60px;
 }
 input {
-  background: #333;
-  color: #fff;
+  background: #DBDBDB;
+  color: #000;
   font-family: Verdana, sans-serif;
-  border: 0.5ch solid #333;
+  border: 2px solid #009FE2;
 }
 input:disabled {
   color: #888;
@@ -72,10 +72,10 @@ input[type="checkbox"] {
   margin-right: 10px;
 }
 select {
-  background: #333;
-  color: #fff;
+  background: #DBDBDB;
+  color: #000;
   font-family: Verdana, sans-serif;
-  border: 0.5ch solid #333;
+  border: 2px solid #009FE2;
 }
 td {
   padding: 2px;

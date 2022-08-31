@@ -4,7 +4,7 @@
 }
 
 :root {
-	--c-1: #111;
+	--c-1: #f8f8f8;
 	--c-f: #fff;
 	--c-2: #222;
 	--c-3: #333;
@@ -30,7 +30,24 @@
 	--bbp: 9px 0 7px 0;
 	--bhd: none;
 	--bmt: 0px;
+	--bg: #fff;
 }
+
+.active > .tab-label{
+	color: var(--c-e);
+}
+
+.active > .icons{
+	color: var(--c-e);
+}
+#namelabel {
+	color: var(--c-tba) !important;
+}
+
+.sliderdisplay {
+	--bg: #57b8e2 !important;
+}
+
 
 html {
 	touch-action: manipulation;
@@ -381,6 +398,7 @@ Effect Speed */
 	padding: 8px;
 	font-size: 20px;
 	overflow: auto;
+	color: #fff;
 }
 
 #info {
@@ -464,7 +482,7 @@ img {
 	position: absolute;
 	top: 12.5px; bottom: 12.5px;
 	left: 13px; right: 13px;
-	background: var(--c-4);
+	background: #fff;
 	border-radius: 17px;
 	pointer-events: none;
 	z-index: -1;
@@ -481,7 +499,7 @@ img {
 .sliderbubble {
     width: 36px;
     line-height: 24px;
-    background: var(--c-3);
+    background: #fff;
     position: absolute;
     transform: translateX(-50%);
     border-radius: 12px;
@@ -517,7 +535,7 @@ input[type=range]::-webkit-slider-thumb {
 	height: 16px;
 	width: 16px;
 	border-radius: 17px;
-	background: var(--c-f);
+	background: #009FE2;
 	cursor: pointer;
 	-webkit-appearance: none;
 	margin-top: 7px;
@@ -525,14 +543,14 @@ input[type=range]::-webkit-slider-thumb {
 input[type=range]::-moz-range-track {
 	width: 100%;
 	height: 30px;
-	background-color: rgba(0, 0, 0, 0);
+	background-color: #fff;
 }
 input[type=range]::-moz-range-thumb {
-	border: 0px solid rgba(0, 0, 0, 0);
+	border: 0px solid #fff;
 	height: 16px;
 	width: 16px;
 	border-radius: 17px;
-	background: var(--c-f);
+	background: #fff;
 	transform: translateY(7px);
 }
 input[type=range]:active + .sliderbubble {

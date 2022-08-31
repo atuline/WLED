@@ -243,7 +243,7 @@ WLED_GLOBAL int8_t audioPin _INIT(36);
 WLED_GLOBAL int8_t audioPin _INIT(AUDIOPIN);
 #endif
 #ifndef DMENABLED // aka DOUT
-WLED_GLOBAL uint8_t dmType _INIT(0);
+WLED_GLOBAL uint8_t dmType _INIT(1);
 #else
 WLED_GLOBAL uint8_t dmType _INIT(DMENABLED);
 #endif
@@ -308,8 +308,8 @@ WLED_GLOBAL byte colSec[] _INIT_N(({ 0, 0, 0, 0 }));      // current RGB(W) seco
 WLED_GLOBAL byte briS     _INIT(128);                     // default brightness
 
 WLED_GLOBAL byte soundSquelch   _INIT(10);          // default squelch value for volume reactive routines
-WLED_GLOBAL byte sampleGain     _INIT(1);           // default sample gain
-WLED_GLOBAL byte soundAgc       _INIT(0);           // default Automagic gain control
+WLED_GLOBAL byte sampleGain     _INIT(200);           // default sample gain
+WLED_GLOBAL byte soundAgc       _INIT(1);           // default Automagic gain control
 WLED_GLOBAL uint16_t noiseFloor _INIT(100);         // default squelch value for FFT reactive routines
 
 WLED_GLOBAL byte nightlightTargetBri _INIT(0);      // brightness after nightlight is over
@@ -321,7 +321,7 @@ WLED_GLOBAL uint16_t transitionDelay _INIT(750);    // default crossfade duratio
 WLED_GLOBAL byte briMultiplier _INIT(100);          // % of brightness to set (to limit power, if you set it to 50 and set bri to 255, actual brightness will be 127)
 
 // User Interface CONFIG
-WLED_GLOBAL char serverDescription[33] _INIT("WLED-SoundReactive");  // Name of module
+WLED_GLOBAL char serverDescription[33] _INIT("WLED CONTROLLER BY ZEDFY");  // Name of module
 WLED_GLOBAL bool syncToggleReceive     _INIT(false);   // UIs which only have a single button for sync should toggle send+receive if this is true, only send otherwise
 
 // Sync CONFIG

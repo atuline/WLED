@@ -7,7 +7,7 @@
 
 //Defaults
 #define DEFAULT_CLIENT_SSID "Your_Network"
-#define DEFAULT_AP_PASS     "wled1234"
+#define DEFAULT_AP_PASS     "zedfy1234"
 #define DEFAULT_OTA_PASS    "wledota"
 
 //increase if you need more
@@ -330,7 +330,7 @@
 #ifdef ESP8266
   #define LEDPIN 2    // GPIO2 (D4) on Wemod D1 mini compatible boards
 #else
-  #define LEDPIN 2   // Changed from 16 to restore compatibility with ESP32-pico
+  #define LEDPIN 16   // Changed from 16 to restore compatibility with ESP32-pico
 #endif
 #endif
 

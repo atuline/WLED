@@ -14,7 +14,7 @@ const char PAGE_msg[] PROGMEM = R"=====(<!DOCTYPE html><html><head><meta content
 <title>WLED Message</title><script>
 function B(){window.history.back()}function RS(){window.location="/settings"}function RP(){top.location.href="/"}
 </script><style>
-.bt{background:#333;color:#fff;font-family:Verdana,sans-serif;border:.3ch solid #333;display:inline-block;font-size:20px;margin:8px;margin-top:12px}body{font-family:Verdana,sans-serif;text-align:center;background:#222;color:#fff;line-height:200%%;margin:0}
+.bt{background:#333;color:#fff;font-family:Verdana,sans-serif;border:.3ch solid #333;display:inline-block;font-size:20px;margin:8px;margin-top:12px}body{font-family:Verdana,sans-serif;text-align:center;background:#f5f5f5;color:#009fe2;line-height:200%%;margin:0}
 </style></head><body><h2>%MSG%</body></html>)=====";
 
 
@@ -39,7 +39,7 @@ const char PAGE_update[] PROGMEM = R"=====(<!DOCTYPE html><html><head><meta cont
 <title>WLED Update</title><script>
 function B(){window.history.back()}function U(){document.getElementById("uf").style.display="none",document.getElementById("msg").style.display="block"}
 </script><style>
-.bt{background:#333;color:#fff;font-family:Verdana,sans-serif;border:.3ch solid #333;display:inline-block;font-size:20px;margin:8px;margin-top:12px}input[type=file]{font-size:16px}body{font-family:Verdana,sans-serif;text-align:center;background:#222;color:#fff;line-height:200%}#msg{display:none}
+.bt{background:#009fe2;color:#fff;font-family:Verdana,sans-serif;border:.3ch solid #fff;display:inline-block;font-size:20px;margin:8px;margin-top:12px}input[type=file]{font-size:16px}body{font-family:Verdana,sans-serif;text-align:center;background-color:#f5f5f5;color:#000;line-height:200%}#msg{display:none}
 </style></head><body><h2>WLED Software Update</h2><form method="POST" 
 action="/update" id="uf" enctype="multipart/form-data" onsubmit="U()">
 Installed version: 0.13.0-b6<br>Download the latest binary: <a 
@@ -55,7 +55,7 @@ Please do not close or refresh the page :)</div></body></html>)=====";
 const char PAGE_welcome[] PROGMEM = R"=====(<!DOCTYPE html><html><head><meta charset="utf-8"><meta 
 content="width=device-width" name="viewport"><meta name="theme-color" 
 content="#222222"><title>Welcome!</title><style>
-body{font-family:Verdana,Helvetica,sans-serif;text-align:center;background-color:#222;margin:0;color:#fff}button{outline:0;cursor:pointer;padding:8px;margin:10px;width:230px;text-transform:uppercase;font-family:helvetica;font-size:19px;background-color:#333;color:#fff;border:0 solid #fff;border-radius:25px}img{width:950px;max-width:82%;image-rendering:pixelated;image-rendering:crisp-edges;margin:4vh 0 0 0;animation:fi 1s}@keyframes fi{from{opacity:0}to{opacity:1}}.main{animation:fi 1.5s .7s both}
+body{font-family:Verdana,Helvetica,sans-serif;text-align:center;background-color:#f5f5f5;margin:0;color:#000}button{outline:0;cursor:pointer;padding:8px;margin:10px;width:230px;text-transform:uppercase;font-family:helvetica;font-size:19px;background-color:#009fe2;color:#fff;border:0 solid #fff;border-radius:25px}img{width:950px;max-width:82%;image-rendering:pixelated;image-rendering:crisp-edges;margin:4vh 0 0 0;animation:fi 1s}@keyframes fi{from{opacity:0}to{opacity:1}}.main{animation:fi 1.5s .7s both}
 </style></head><body><img alt="" 
 src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAG0AAAAfCAMAAADazLOuAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAABLUExURQAAAAB81gCU/zKq///mo7sWMN8bO+ZIYtZaAP9rAP+HMsCiG+TAIOnMS0KqNU7KPnLUZOrq6v///4CAgGhoaL+/v6CgoExMTAAAAAlm4O8AAAAZdFJOU////////////////////////////////wABNAq3AAAACXBIWXMAAA7DAAAOwwHHb6hkAAACN0lEQVRIS73VjVLCMBAEYIr8CYKkrdj3f1J37zaXFCpTO+piaDgbPq9px9VQ0qyrvKj4q6m0Zr1h+M7xF1zRmnWzqV9/0d2jttGotO1uv9dUObwej5oqp7fzWVPl8n69aprzoOUUbbvdIbV3OLwitXc6vSG1d7m8I3feSEN0j2CeNbOY4MxigjOLCc4sZsTV2l1cCyy4wIILLLjAxtykltq2rbTU+qi01N5rXNO2leaFORoija2l5MM5a02ac9Ya16Sk5tgaPrUpjZub0BL6YqSxKwbH77XUUmSkJXSl8QtaMuyJhq5maL5nTKVpZC13VmtMpTFT2g4vJjTuGfMzzXftiUZnhdtgb1xofvypRon5TjNnxYN9zJo6K5ruSIzQtGuVZn0x91rKvdHBvm39E7SyZ4y06Gz8BDBFKzsXmhcwyfsGZ9VpbhoiCinaxPNmGWmWWrNU2jB0q6HvOhN1JUtCixQtp2g51ZVUXIPS2RMAD++T2nY/DrDjOMDO4wC7jmNYj3d73nrXug8Yt9uNB8xNU1cKNXWlUFNXCjV1pZhGTE83m2vWfYf/NGj4Bg1zu5JD3/MnH5ZWfLOksbmGWGjgXMN5/C2GXYGFFW9Nmtle6Xut0Gm+JsayCj8z0nhjGvYJzVf4aSzmNYsr+u7Q2JIdoX3YOQjOslmsW1jJ3120nE9gfo79hTaNdcsqVR610lvO47pllae9ReZ805zKo2a3iaY5c75pTmVCA6dJ5H7N0sr/asPwBehb7ifEhusRAAAAAElFTkSuQmCC">
 <div class="main"><h1>Welcome to WLED!</h1><h3>
@@ -93,7 +93,7 @@ function updatePreview(e){var n="linear-gradient(90deg,",o=e.length;for(i=0;i<o;
 const char PAGE_404[] PROGMEM = R"=====(<!DOCTYPE html><html><head><meta charset="utf-8"><meta 
 content="width=device-width" name="viewport"><meta name="theme-color" 
 content="#222222"><title>Not found</title><style>
-body{font-family:Verdana,Helvetica,sans-serif;text-align:center;background-color:#222;margin:0;color:#fff}img{width:400px;max-width:50%;image-rendering:pixelated;image-rendering:crisp-edges;margin:25px 0 -10px 0}button{outline:0;cursor:pointer;padding:8px;margin:10px;width:230px;text-transform:uppercase;font-family:helvetica;font-size:19px;background-color:#333;color:#fff;border:0 solid #fff;border-radius:25px}
+body{font-family:Verdana,Helvetica,sans-serif;text-align:center;background-color:#f5f5f5;margin:0;color:#fff}img{width:400px;max-width:50%;image-rendering:pixelated;image-rendering:crisp-edges;margin:25px 0 -10px 0}button{outline:0;cursor:pointer;padding:8px;margin:10px;width:230px;text-transform:uppercase;font-family:helvetica;font-size:19px;background-color:#009fe2;color:#fff;border:0 solid #fff;border-radius:25px}b,h1{color:#009fe2}
 </style></head><body><img alt="" 
 src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAMAAABEpIrGAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAbUExURQAAAAB81gCU/zKq/////9bW1oCAgGhoaAAAAGPLX8AAAAAJdFJOU///////////AFNPeBIAAAAJcEhZcwAADsAAAA7AAWrWiQkAAACdSURBVDhPxc9bDoUgEANQebP/FUuHMjBGY/B+3EYR7RH0qC/ZBc6HwCljgHO+xZIVSI2sYgHaG7EBWh8jWoxTrCBFdDJ+BD4lbIHxAcz8APAVLTsrZE4eQD5qzt3cAFTYokC4YCN9Gybgu4yAQtBFLQXHuHABA7JMeOEC/E0W5uy9gv4vo5QHK2i7yq2C8UABM4HmL+CSTXCTF1DrCX6+Gp9zB5dsAAAAAElFTkSuQmCC">
 <h1>404 Not Found</h1><b>Akemi does not know where you are headed...</b><br><br>
