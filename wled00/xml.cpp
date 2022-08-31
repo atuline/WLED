@@ -62,7 +62,7 @@ void XML_response(AsyncWebServerRequest *request, char* dest)
   oappend(SET_F("</f3><fp>"));
   oappendi(effectPalette);
   oappend(SET_F("</fp><wv>"));
-  if (strip.isRgbw) {
+  if (strip.hasWhiteChannel()) {
    oappendi(col[3]);
   } else {
    oappend("-1");
@@ -80,11 +80,12 @@ void XML_response(AsyncWebServerRequest *request, char* dest)
     oappend(SET_F(" (live)"));
   }
   oappend(SET_F("</ds><ss>"));
-  oappendi(strip.getMainSegmentId());
+  oappendi(strip.getFirstSelectedSegId());
   oappend(SET_F("</ss></vs>"));
   if (request != nullptr) request->send(200, "text/xml", obuf);
 }
 
+//Deprecated, use of /json/state and presets recommended instead
 void URL_response(AsyncWebServerRequest *request)
 {
   char sbuf[256];
@@ -397,8 +398,9 @@ void getSettingsJS(byte subPage, char* dest)
     sappend('c',SET_F("MS"),autoSegments);
     sappend('c',SET_F("CCT"),correctWB);
     sappend('c',SET_F("CR"),cctFromRgb);
-		sappend('v',SET_F("CB"),strip.cctBlending);
-		sappend('v',SET_F("AW"),Bus::getAutoWhiteMode());
+    sappend('v',SET_F("CB"),strip.cctBlending);
+    sappend('v',SET_F("FR"),strip.getTargetFps());
+    sappend('v',SET_F("AW"),strip.autoWhiteMode);
     sappend('v',SET_F("SOMP"),strip.stripOrMatrixPanel);
     sappend('v',SET_F("MXW"),strip.matrixWidth);
     sappend('v',SET_F("MXH"),strip.matrixHeight);
@@ -434,7 +436,7 @@ void getSettingsJS(byte subPage, char* dest)
       sappend('v',co,bus->getColorOrder());
       sappend('v',ls,bus->getStart());
       sappend('c',cv,bus->reversed);
-      sappend('c',sl,bus->skippedLeds());
+      sappend('v',sl,bus->skippedLeds());
       sappend('c',rf,bus->isOffRefreshRequired());
     }
     sappend('v',SET_F("MA"),strip.ablMilliampsMax);
@@ -445,6 +447,19 @@ void getSettingsJS(byte subPage, char* dest)
       olen -= 2; //delete ";
       oappendi(strip.currentMilliamps);
       oappend(SET_F("mA\";"));
+    }
+
+    oappend(SET_F("resetCOM("));
+    oappend(itoa(WLED_MAX_COLOR_ORDER_MAPPINGS,nS,10));
+    oappend(SET_F(");"));
+    const ColorOrderMap& com = busses.getColorOrderMap();
+    for (uint8_t s=0; s < com.count(); s++) {
+      const ColorOrderMapEntry* entry = com.get(s);
+      if (entry == nullptr) break;
+      oappend(SET_F("addCOM("));
+      oappend(itoa(entry->start,nS,10));  oappend(",");
+      oappend(itoa(entry->len,nS,10));  oappend(",");
+      oappend(itoa(entry->colorOrder,nS,10));  oappend(");");
     }
 
     sappend('v',SET_F("CA"),briS);
@@ -474,6 +489,7 @@ void getSettingsJS(byte subPage, char* dest)
     sappend('v',SET_F("TT"),touchThreshold);
     sappend('v',SET_F("IR"),irPin);
     sappend('v',SET_F("IT"),irEnabled);
+    sappend('c',SET_F("MSO"),!irApplyToAllSelected);
     // 2D Matrix Settings
     sappend('v',SET_F("SOMP"),strip.stripOrMatrixPanel);
     sappend('v',SET_F("MXW"),strip.matrixWidth);
@@ -505,6 +521,8 @@ void getSettingsJS(byte subPage, char* dest)
     sappend('c',SET_F("RB"),receiveNotificationBrightness);
     sappend('c',SET_F("RC"),receiveNotificationColor);
     sappend('c',SET_F("RX"),receiveNotificationEffects);
+    sappend('c',SET_F("SO"),receiveSegmentOptions);
+    sappend('c',SET_F("SG"),receiveSegmentBounds);
     sappend('c',SET_F("SD"),notifyDirectDefault);
     sappend('c',SET_F("SB"),notifyButton);
     sappend('c',SET_F("SH"),notifyHue);
@@ -515,6 +533,7 @@ void getSettingsJS(byte subPage, char* dest)
     sappend('c',SET_F("NB"),nodeBroadcastEnabled);
 
     sappend('c',SET_F("RD"),receiveDirect);
+    sappend('c',SET_F("MO"),useMainSegmentOnly);
     sappend('v',SET_F("EP"),e131Port);
     sappend('c',SET_F("ES"),e131SkipOutOfSequence);
     sappend('c',SET_F("EM"),e131Multicast);
@@ -558,7 +577,7 @@ void getSettingsJS(byte subPage, char* dest)
     memset(fpass,'*',l);
     sappends('s',SET_F("MQPASS"),fpass);
     sappends('s',SET_F("MQCID"),mqttClientID);
-    sappends('s',SET_F("MD"),mqttDeviceTopic);
+    sappends('s',"MD",mqttDeviceTopic);
     sappends('s',SET_F("MG"),mqttGroupTopic);
     sappend('c',SET_F("BM"),buttonPublishMqtt);
     #endif
@@ -589,6 +608,7 @@ void getSettingsJS(byte subPage, char* dest)
 
     sappends('m',SET_F("(\"sip\")[0]"),hueErrorString);
     #endif
+    sappend('v',SET_F("BD"),serialBaud);
   }
 
   if (subPage == 5)
@@ -609,16 +629,13 @@ void getSettingsJS(byte subPage, char* dest)
       sprintf_P(tm, PSTR("Sunrise: %02d:%02d Sunset: %02d:%02d"), hour(sunrise), minute(sunrise), hour(sunset), minute(sunset));
       sappends('m',SET_F("(\"times\")[1]"),tm);
     }
-    sappend('i',SET_F("OL"),overlayCurrent);
+    sappend('c',SET_F("OL"),overlayCurrent);
     sappend('v',SET_F("O1"),overlayMin);
     sappend('v',SET_F("O2"),overlayMax);
     sappend('v',SET_F("OM"),analogClock12pixel);
     sappend('c',SET_F("OS"),analogClockSecondsTrail);
     sappend('c',SET_F("O5"),analogClock5MinuteMarks);
-    #ifndef WLED_DISABLE_CRONIXIE
-    sappends('s',SET_F("CX"),cronixieDisplay);
-    sappend('c',SET_F("CB"),cronixieBacklight);
-    #endif
+
     sappend('c',SET_F("CE"),countdownMode);
     sappend('v',SET_F("CY"),countdownYear);
     sappend('v',SET_F("CI"),countdownMonth);
@@ -649,6 +666,12 @@ void getSettingsJS(byte subPage, char* dest)
       k[0] = 'N'; sappend('v',k,timerMinutes[i]);
       k[0] = 'T'; sappend('v',k,timerMacro[i]);
       k[0] = 'W'; sappend('v',k,timerWeekday[i]);
+      if (i<8) {
+        k[0] = 'M'; sappend('v',k,(timerMonth[i] >> 4) & 0x0F);
+				k[0] = 'P'; sappend('v',k,timerMonth[i] & 0x0F);
+        k[0] = 'D'; sappend('v',k,timerDay[i]);
+				k[0] = 'E'; sappend('v',k,timerDayEnd[i]);
+      }
     }
   }
 
@@ -704,7 +727,7 @@ void getSettingsJS(byte subPage, char* dest)
   {
     sappend('v',SET_F("SQ"),soundSquelch);
     sappend('v',SET_F("GN"),sampleGain);
-    sappend('c',SET_F("AGC"),soundAgc);
+    sappend('i',SET_F("AGC"),soundAgc);
     sappend('v',SET_F("SI"),audioPin);
     sappend('i',SET_F("DMM"),dmType);
     sappend('v',SET_F("DI"),i2ssdPin);

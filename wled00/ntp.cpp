@@ -35,7 +35,6 @@ Timezone* tz;
 #define TZ_INIT               255
 
 byte tzCurrent = TZ_INIT; //uninitialized
-bool ntpFirstTime = true;
 
 void updateTimezone() {
   delete tz;
@@ -170,7 +169,6 @@ void handleTime() {
     updateLocalTime();
     checkTimers();
     checkCountdown();
-    handleOverlays();
   }
 }
 
@@ -319,6 +317,32 @@ byte weekdayMondayFirst()
   return wd;
 }
 
+bool isTodayInDateRange(byte monthStart, byte dayStart, byte monthEnd, byte dayEnd)
+{
+	if (monthStart == 0 || dayStart == 0) return true;
+	if (monthEnd == 0) monthEnd = monthStart;
+	if (dayEnd == 0) dayEnd = 31;
+	byte d = day(localTime);
+	byte m = month(localTime);
+
+	if (monthStart < monthEnd) {
+		if (m > monthStart && m < monthEnd) return true;
+		if (m == monthStart) return (d >= dayStart);
+		if (m == monthEnd) return (d <= dayEnd);
+		return false;
+	}
+	if (monthEnd < monthStart) { //range spans change of year
+		if (m > monthStart || m < monthEnd) return true;
+		if (m == monthStart) return (d >= dayStart);
+		if (m == monthEnd) return (d <= dayEnd);
+		return false;
+	}
+
+	//start month and end month are the same
+	if (dayEnd < dayStart) return (m != monthStart || (d <= dayEnd || d >= dayStart)); //all year, except the designated days in this month
+	return (m == monthStart && d >= dayStart && d <= dayEnd); //just the designated days this month
+}
+
 void checkTimers()
 {
   if (lastTimerMinute != minute(localTime)) //only check once a new minute begins
@@ -328,49 +352,21 @@ void checkTimers()
     // re-calculate sunrise and sunset just after midnight
     if (!hour(localTime) && minute(localTime)==1) calculateSunriseAndSunset();
 
-    int h = hour(localTime);
-    int m = minute(localTime);
-    byte d = weekdayMondayFirst();
-
-    DEBUG_PRINTF("Local time: %02d:%02d\n", h, m);
-    uint16_t scanBackMax = ntpFirstTime ? 10080 : 1;   // first time scan back 7 * 24 * 60 minutes
-    for (uint16_t scanBack = 0; scanBack < scanBackMax; scanBack++)
+    DEBUG_PRINTF("Local time: %02d:%02d\n", hour(localTime), minute(localTime));
+    for (uint8_t i = 0; i < 8; i++)
     {
-      for (uint8_t i = 0; i < 8; i++)
+      if (timerMacro[i] != 0
+          && (timerWeekday[i] & 0x01) //timer is enabled
+          && (timerHours[i] == hour(localTime) || timerHours[i] == 24) //if hour is set to 24, activate every hour
+          && timerMinutes[i] == minute(localTime)
+          && ((timerWeekday[i] >> weekdayMondayFirst()) & 0x01) //timer should activate at current day of week
+          && isTodayInDateRange(((timerMonth[i] >> 4) & 0x0F), timerDay[i], timerMonth[i] & 0x0F, timerDayEnd[i])
+         )
       {
-        if (timerMacro[i] != 0
-            && (timerHours[i] == h || timerHours[i] == 24) //if hour is set to 24, activate every hour
-            && timerMinutes[i] == m
-            && (timerWeekday[i] & 0x01) //timer is enabled
-            && ((timerWeekday[i] >> d) & 0x01)) //timer should activate at current day of week
-        {
-          if (currentPreset != timerMacro[i])
-          {
-            DEBUG_PRINTF("index: %d preset: %d time: %02d:%02d day: %d\n", i, timerMacro[i], h, m, d);
-            applyPreset(timerMacro[i]);
-          }
-          scanBack = scanBackMax;   // exit outer loop
-          unloadPlaylist();
-          applyPreset(timerMacro[i]);
-        }
-      }
-
-      // step back 1 minute and handle underflow of minute (0-59) / hour (0-23) / weekday (1-7)
-      m--;
-      if (m < 0)
-      {
-        m = 59;
-        h--;
-        if (h < 0) {
-          h = 23;
-          d--;
-          if (d == 0) d = 7;
-        }
+        unloadPlaylist();
+        applyPreset(timerMacro[i]);
       }
     }
-
-    ntpFirstTime = false;
-
     // sunrise macro
     if (sunrise) {
       time_t tmp = sunrise + timerMinutes[8]*60;  // NOTE: may not be ok
@@ -470,6 +466,7 @@ void calculateSunriseAndSunset() {
     int minUTC = getSunriseUTC(year(localTime), month(localTime), day(localTime), latitude, longitude);
     if (minUTC) {
       // there is a sunrise
+      if (minUTC < 0) minUTC += 24*60; // add a day if negative
       tim_0.tm_hour = minUTC / 60;
       tim_0.tm_min = minUTC % 60;
       sunrise = tz->toLocal(mktime(&tim_0) + utcOffsetSecs);
@@ -481,6 +478,7 @@ void calculateSunriseAndSunset() {
     minUTC = getSunriseUTC(year(localTime), month(localTime), day(localTime), latitude, longitude, true);
     if (minUTC) {
       // there is a sunset
+      if (minUTC < 0) minUTC += 24*60; // add a day if negative
       tim_0.tm_hour = minUTC / 60;
       tim_0.tm_min = minUTC % 60;
       sunset = tz->toLocal(mktime(&tim_0) + utcOffsetSecs);

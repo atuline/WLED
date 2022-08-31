@@ -217,7 +217,7 @@ writeChunks(
       mangle: (str) =>
         str
           .replace("%", "%%")
-          .replace(/User Interface\<\/button\>\<\/form\>/gms, "User Interface\<\/button\>\<\/form\>%DMXMENU%"),
+          .replace(/Usermods\<\/button\>\<\/form\>/gms, "Usermods\<\/button\>\<\/form\>%DMXMENU%"),
     },
     {
       file: "settings_wifi.htm",
@@ -433,6 +433,14 @@ const char PAGE_dmxmap[] PROGMEM = R"=====()=====";
     {
       file: "liveviewws.htm",
       name: "PAGE_liveviewws",
+      prepend: "=====(",
+      append: ")=====",
+      method: "plaintext",
+      filter: "html-minify",
+    },
+    {
+      file: "liveviewws2D.htm",
+      name: "PAGE_liveviewws2D",
       prepend: "=====(",
       append: ")=====",
       method: "plaintext",

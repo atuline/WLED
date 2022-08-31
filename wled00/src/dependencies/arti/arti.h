@@ -1,8 +1,8 @@
 /*
    @title   Arduino Real Time Interpreter (ARTI)
    @file    arti.h
-   @version 0.2.3
-   @date    20220103
+   @version 0.3.0
+   @date    20220112
    @author  Ewoud Wijma
    @repo    https://github.com/ewoudwijma/ARTI
    @remarks
@@ -10,7 +10,6 @@
           - IF UPDATING THIS FILE IN THE WLED REPO, SEND A PULL REQUEST TO https://github.com/ewoudwijma/ARTI AS WELL!!!
    @later
           - Code improvememt
-            - remove std::string (now only in logging)
             - See 'for some weird reason this causes a crash on esp32'
             - check why column/lineno not correct
           - Definition improvements
@@ -29,17 +28,12 @@
           - move code from interpreter to analyzer to speed up interpreting
    @done?
    @done
-          - change doubles to floats (faster!)
-          - Conditional expression ?x?a:b
-          - Add unary operators: -1, ++, --
-          - support .12345 notation
-          - bug fix !=
-          - minimize value["x"]
+          - save log after first run of loop to get runtime errors included (or 30 iterations to also capture any stack overflows)
    @todo
           - check why statement is not 'shrinked'
           - make default work in js (remove default as we have now load template)
-          - save log after first run of loop to get runtime errors included (or 30 iterations to also capture any stack overflows)
           - add PI
+          - color_fade_pulse because /pixelCount instead of ledCount should not crash
   */
 
 #pragma once
@@ -48,8 +42,8 @@
 #define ARTI_FILE 2
 
 #if ARTI_PLATFORM == ARTI_ARDUINO //defined in arti_definition.h e.g. arti_wled.h!
-  #include "wled.h"  
-  #include "src/dependencies/json/ArduinoJson-v6.h"
+  #include "../../../wled.h"  
+  #include "../json/ArduinoJson-v6.h"
 
   File logFile;
 
@@ -86,6 +80,7 @@
 #endif
 
 bool logToFile = true; //print output to file (e.g. default.wled.log)
+uint32_t frameCounter = 0; //tbd move to class if more instances run 
 
 void artiPrintf(char const * format, ...)
 {
@@ -100,7 +95,7 @@ void artiPrintf(char const * format, ...)
   else
   {
     #if ARTI_PLATFORM == ARTI_ARDUINO
-      // rocket science here! As logfile.printf causes crashes we create our own printf here
+      // rocket science here! As logfile.printf causes crashes/wrong output we create our own printf here
       // logFile.printf(format, argp);
       for (int i = 0; i < strlen(format); i++) 
       {
@@ -116,6 +111,9 @@ void artiPrintf(char const * format, ...)
               break;
             case 'c':
               logFile.print((char)va_arg(argp, int));
+              break;
+            case 'f':
+              logFile.print(va_arg(argp, double));
               break;
             case '%':
               logFile.print("%"); // in case of %%
@@ -133,13 +131,20 @@ void artiPrintf(char const * format, ...)
           logFile.print(format[i]);
         }
       }
-
     #else
       vfprintf(logFile, format, argp);
     #endif
   }
   va_end(argp);
 }
+
+//add millis function for non arduino
+#if ARTI_PLATFORM != ARTI_ARDUINO
+  uint32_t millis()
+  {
+    return std::chrono::system_clock::now().time_since_epoch().count();
+  }
+#endif
 
 #ifdef ARTI_DEBUG
     #define DEBUG_ARTI(...) artiPrintf(__VA_ARGS__)
@@ -786,6 +791,7 @@ class ScopedSymbolTable {
 
   Symbol* symbols[nrOfSymbolsPerScope];
   uint8_t symbolsIndex = 0;
+  uint8_t nrOfFormals = 0;
   char scope_name[charLength];
   uint8_t scope_level;
   ScopedSymbolTable *enclosing_scope;
@@ -977,7 +983,7 @@ public:
   {
     if (stack_index >= arrayLength) 
     {
-      ERROR_ARTI("Push floatStack full %u of %u\n", stack_index, arrayLength);
+      ERROR_ARTI("Push floatStack full (check functions with result assigned) %u\n", arrayLength);
       errorOccurred = true;
     }
     else if (value == floatNull)
@@ -1047,6 +1053,8 @@ private:
   uint8_t stages = 5; //for debugging: 0:parseFile, 1:Lexer, 2:parse, 3:optimize, 4:analyze, 5:interpret should be 5 if no debugging
 
   char logFileName[fileNameLength];
+
+  uint32_t startMillis;
 
 public:
   ARTI() 
@@ -1229,7 +1237,15 @@ public:
 
         if (!nodeExpression.isNull()) //if node
         {
-          nextParseTree.remove("connect"); //remove connector
+          if (nextParseTree.containsKey("connect"))
+            nextParseTree.remove("connect"); //remove connector
+          // for values which are not parsed deeper. e.g. : {"formal": {"ID": "z"}}
+          for (JsonPair parseTreePair : nextParseTree.as<JsonObject>()) 
+          {
+            JsonVariant value = parseTreePair.value();
+            if (value.containsKey("connect"))
+              value.remove("connect"); //remove connector
+          }
 
           if (resultChild == ResultFail) { //remove result of parse
             nextParseTree.remove(nextNode_name); //remove the failed stuff
@@ -1430,6 +1446,8 @@ public:
                 if (value.containsKey("formals"))
                   analyze(value["formals"], nullptr, function_scope, depth + 1);
 
+                function_scope->nrOfFormals = function_scope->symbolsIndex;
+
                 if (value["block"].isNull())
                   ERROR_ARTI("%s Function %s: no block in parseTree\n", spaces+50-depth, function_name); 
                 else
@@ -1479,8 +1497,9 @@ public:
                   Symbol* var_symbol = current_scope->lookup(variable_name); //lookup here and parent scopes
                   if (node == F_VarRef) 
                   {
-                    if (var_symbol == nullptr)
-                      ERROR_ARTI("%s VarRef %s ID not found in scope of %s\n", spaces+50-depth, variable_name, current_scope->scope_name); 
+                    if (var_symbol == nullptr) 
+                      WARNING_ARTI("%s VarRef %s ID not found in scope of %s\n", spaces+50-depth, variable_name, current_scope->scope_name); 
+                      //only warning: value 0 in interpreter (div 0 is captured)
                     else 
                       ANDBG_ARTI("%s VarRef found %s.%s (%u)\n", spaces+50-depth, var_symbol->scope->scope_name, variable_name, depth);
                   }
@@ -1965,15 +1984,12 @@ public:
                     if (value.containsKey("actuals"))
                       interpret(value["actuals"], nullptr, current_scope, depth + 1);
 
-                    for (uint8_t i=0; i<function_symbol->function_scope->symbolsIndex; i++) //backwards because popped in reversed order
+                    for (uint8_t i=0; i<function_symbol->function_scope->nrOfFormals; i++)
                     {
-                      if (function_symbol->function_scope->symbols[i]->symbol_type == F_Formal) //select formal parameters
-                      {
-                        //determine type, for now assume float
-                        float result = valueStack->floatStack[lastIndex++];
-                        ar->set(function_symbol->function_scope->symbols[i]->scope_index, result);
-                        RUNLOG_ARTI("%s Actual %s.%s = %f (pop %u)\n", spaces+50-depth, function_name, function_symbol->function_scope->symbols[i]->name, result, valueStack->stack_index);
-                      }
+                      //determine type, for now assume float
+                      float result = valueStack->floatStack[lastIndex++];
+                      ar->set(function_symbol->function_scope->symbols[i]->scope_index, result);
+                      RUNLOG_ARTI("%s Actual %s.%s = %f (pop %u)\n", spaces+50-depth, function_name, function_symbol->function_scope->symbols[i]->name, result, valueStack->stack_index);
                     }
 
                     valueStack->stack_index = oldIndex;
@@ -2401,12 +2417,19 @@ public:
     return !errorOccurred;
   } //interpret
 
-  void closeLog() {
-    //arduino stops log here
+  void closeLog() 
+  {
+    //non arduino stops log here
     #if ARTI_PLATFORM == ARTI_ARDUINO
       if (logToFile) 
       {
         logFile.close();
+        logToFile = false;
+      }
+    #else
+      if (logToFile)
+      {
+        fclose(logFile);
         logToFile = false;
       }
     #endif
@@ -2415,6 +2438,8 @@ public:
   bool setup(const char *definitionName, const char *programName)
   {
     errorOccurred = false;
+    frameCounter = 0;
+
     logToFile = true;
     //open logFile
     if (logToFile)
@@ -2434,7 +2459,7 @@ public:
 
     MEMORY_ARTI("setup %u bytes free\n", FREE_SIZE);
 
-    if (stages < 1) {closeLog(); close(); return true;}
+    if (stages < 1) {close(); return true;}
     bool loadParseTreeFile = false;
 
     #if ARTI_PLATFORM == ARTI_ARDUINO
@@ -2447,9 +2472,9 @@ public:
 
     MEMORY_ARTI("open %s %u ✓\n", definitionName, FREE_SIZE);
 
-    if (!definitionFile) {
+    if (!definitionFile) 
+    {
       ERROR_ARTI("Definition file %s not found. Press Download wled.json\n", definitionName);
-      closeLog();
       return false;
     }
     
@@ -2468,9 +2493,9 @@ public:
     MEMORY_ARTI("definitionTree %u => %u ✓\n", (unsigned int)definitionJsonDoc->capacity(), FREE_SIZE); //unsigned int needed when running embedded to suppress warnings
 
     DeserializationError err = deserializeJson(*definitionJsonDoc, definitionFile);
-    if (err) {
+    if (err) 
+    {
       ERROR_ARTI("deserializeJson() of definition failed with code %s\n", err.c_str());
-      closeLog();
       return false;
     }
     definitionFile.close();
@@ -2479,15 +2504,15 @@ public:
     JsonObject::iterator objectIterator = definitionJson.begin();
     JsonObject metaData = objectIterator->value();
     const char * version = metaData["version"];
-    if (strcmp(version, "0.2.3") != 0) {
-      ERROR_ARTI("Version of definition.json file (%s) should be 0.2.3. Press Download wled.json\n", version);
-      closeLog();
+    if (strcmp(version, "0.3.0") != 0) 
+    {
+      ERROR_ARTI("Version of definition.json file (%s) should be 0.3.0.\nPress Download wled.json\n", version);
       return false;
     }
     const char * startNode = metaData["start"];
-    if (startNode == nullptr) {
-      ERROR_ARTI("Setup Error: No start node found in definition file\n");
-      closeLog();
+    if (startNode == nullptr) 
+    {
+      ERROR_ARTI("Setup Error: No start node found in definition file %s\n", definitionName);
       return false;
     }
 
@@ -2499,9 +2524,9 @@ public:
       programFile.open(programName, std::ios::in);
     #endif
     MEMORY_ARTI("open %s %u ✓\n", programName, FREE_SIZE);
-    if (!programFile) {
+    if (!programFile) 
+    {
       ERROR_ARTI("Program file %s not found\n", programName);
-      closeLog();
       return  false;
     }
 
@@ -2547,7 +2572,7 @@ public:
       #endif
     #endif
 
-    if (stages < 1) {closeLog(); close(); return true;}
+    if (stages < 1) {close(); return true;}
 
     if (!loadParseTreeFile) 
     {
@@ -2556,19 +2581,18 @@ public:
       lexer = new Lexer(programText, definitionJson);
       lexer->get_next_token();
 
-      if (stages < 2) {closeLog(); close(); return true;}
+      if (stages < 2) {close(); return true;}
 
       uint8_t result = parse(parseTreeJson, startNode, '&', lexer->definitionJson[startNode], 0);
 
       if (this->lexer->pos != strlen(this->lexer->text)) 
       {
         ERROR_ARTI("Node %s Program not entirely parsed (%u,%u) %u of %u\n", startNode, this->lexer->lineno, this->lexer->column, this->lexer->pos, (unsigned int)strlen(this->lexer->text));
-        closeLog();
         return false;
       }
-      else if (result == ResultFail) {
+      else if (result == ResultFail) 
+      {
         ERROR_ARTI("Node %s Program parsing failed (%u,%u) %u of %u\n", startNode, this->lexer->lineno, this->lexer->column, this->lexer->pos, (unsigned int)strlen(this->lexer->text));
-        closeLog();
         return false;
       }
       else
@@ -2590,9 +2614,9 @@ public:
       // read parseTree
       #ifdef ARTI_DEBUG // only write file if debug is on
         DeserializationError err = deserializeJson(*parseTreeJsonDoc, parseTreeFile);
-        if (err) {
+        if (err) 
+        {
           ERROR_ARTI("deserializeJson() of parseTree failed with code %s\n", err.c_str());
-          closeLog();
           return false;
         }
       #endif
@@ -2607,7 +2631,6 @@ public:
       if (!optimize(parseTreeJson)) 
       {
         ERROR_ARTI("Optimize failed\n");
-        closeLog();
         return false;
       }
       else
@@ -2640,7 +2663,7 @@ public:
       parseTreeFile.close();
     #endif
 
-    if (stages < 5 || errorOccurred) {closeLog(); close(); return true;}
+    if (stages < 5 || errorOccurred) {close(); return !errorOccurred;}
 
     //interpret main
     callStack = new CallStack();
@@ -2650,23 +2673,20 @@ public:
     { 
       RUNLOG_ARTI("\ninterpret %s %u %u\n", global_scope->scope_name, global_scope->scope_level, global_scope->symbolsIndex); 
 
-      if (!interpret(parseTreeJson)) {
+      if (!interpret(parseTreeJson)) 
+      {
         ERROR_ARTI("Interpret main failed\n");
-        closeLog();
         return false;
       }
     }
     else
     {
       ERROR_ARTI("\nInterpret global scope is nullptr\n");
-      closeLog();
       return false;
     }
 
     MEMORY_ARTI("Interpret main %u ✓\n", FREE_SIZE);
  
-    closeLog();
-
     return !errorOccurred;
   } // setup
 
@@ -2689,15 +2709,10 @@ public:
 
     MEMORY_ARTI("closed Arti %u ✓\n", FREE_SIZE);
 
-    //non arduino stops log here
+    closeLog();
+
     #if ARTI_PLATFORM == ARTI_ARDUINO
       LITTLEFS.remove(logFileName); //cleanup the /edit folder a bit
-    #else
-      if (logToFile)
-      {
-        fclose(logFile);
-        logToFile = false;
-      }
     #endif
   }
 }; //ARTI

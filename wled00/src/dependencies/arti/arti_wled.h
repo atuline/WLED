@@ -1,8 +1,8 @@
 /*
    @title   Arduino Real Time Interpreter (ARTI)
    @file    arti_wled_plugin.h
-   @version 0.2.3
-   @date    20220103
+   @version 0.3.0
+   @date    20220112
    @author  Ewoud Wijma
    @repo    https://github.com/ewoudwijma/ARTI
  */
@@ -21,8 +21,10 @@
 
 #if ARTI_PLATFORM == ARTI_ARDUINO
   #include "arti.h"
-  #include "FX.h"
+//  #include "FX.h"
   extern float sampleAvg;
+  extern float sampleAgc;
+  extern byte soundAgc;
 #else
   #include "../arti.h"
   #include <string.h>
@@ -34,6 +36,8 @@
 enum Externals
 {
   F_ledCount,
+  F_matrixWidth,
+  F_matrixHeight,
   F_setPixelColor,
   F_leds,
   F_setPixels,
@@ -70,6 +74,7 @@ enum Externals
   F_abs,
   F_min,
   F_max,
+  F_floor,
 
   F_hour,
   F_minute,
@@ -89,8 +94,6 @@ enum Externals
   class WS2812FX {
   public:
     uint16_t matrixWidth = 16, matrixHeight = 16;
-
-    uint32_t frameCounter = 0;
 
     uint16_t XY(uint16_t x, uint16_t y)
     {
@@ -285,13 +288,15 @@ float WS2812FX::arti_external_function(uint8_t function, float par1, float par2,
       return fmin(par1, par2);
     case F_max:
       return fmax(par1, par2);
+    case F_floor:
+      return floorf(par1);
 
     // Reference: https://github.com/atuline/PixelBlaze
     case F_time: // A sawtooth waveform between 0.0 and 1.0 that loops about every 65.536*interval seconds. e.g. use .015 for an approximately 1 second.
     {
       float myVal = millis();
-      myVal = myVal / 1000 * .015259 / par1;          // PixelBlaze uses 1000/65535 = .015259
-      myVal = fmod(myVal, 1.0);
+      myVal = myVal / 65535 / par1;           // PixelBlaze uses 1000/65535 = .015259. 
+      myVal = fmod(myVal, 1.0);               // ewowi: with 0.015 as input, you get fmod(millis/1000,1.0), which has a period of 1 second, sounds right
       return myVal;
     }
     case F_triangle: // Converts a sawtooth waveform v between 0.0 and 1.0 to a triangle waveform between 0.0 to 1.0. v "wraps" between 0.0 and 1.0.
@@ -335,6 +340,10 @@ float WS2812FX::arti_get_external_variable(uint8_t variable, float par1, float p
     {
       case F_ledCount:
         return SEGLEN;
+      case F_matrixWidth:
+        return strip.matrixWidth;
+      case F_matrixHeight:
+        return strip.matrixHeight;
       case F_leds:
         if (par1 == floatNull) {
           ERROR_ARTI("arti_get_external_variable leds without indices not supported yet (get leds)\n");
@@ -359,7 +368,7 @@ float WS2812FX::arti_get_external_variable(uint8_t variable, float par1, float p
       case F_custom3Slider:
         return SEGMENT.custom3;
       case F_sampleAvg:
-        return sampleAvg;
+        return((soundAgc) ? sampleAgc : sampleAvg);
 
       case F_hour:
         return ((float)hour(localTime));
@@ -373,6 +382,10 @@ float WS2812FX::arti_get_external_variable(uint8_t variable, float par1, float p
     {
       case F_ledCount:
         return 3; // used in testing e.g. for i = 1 to ledCount
+      case F_matrixWidth:
+        return 2;
+      case F_matrixHeight:
+        return 4;
       case F_leds:
         if (par1 == floatNull) {
           ERROR_ARTI("arti_get_external_variable leds without indices not supported yet (get leds)\n");
@@ -427,7 +440,7 @@ void WS2812FX::arti_set_external_variable(float value, uint8_t variable, float p
           errorOccurred = true;
         }
         else if (par2 == floatNull)
-          leds[realPixelIndex((uint16_t)par1%SEGLEN)] = value;
+          leds[segmentToLogical((uint16_t)par1%SEGLEN)] = value;
         else
           leds[XY((uint16_t)par1%SEGMENT.width, (uint16_t)par2%SEGMENT.height)] = value; //2D value!!
 
@@ -508,15 +521,16 @@ bool ARTI::loop()
 
       for (int i = 0; i< arti_get_external_variable(F_ledCount); i++)
       {
-          ar->set(function_symbol->function_scope->symbols[0]->scope_index, i); // set ledIndex to count value
+        ar->set(function_symbol->function_scope->symbols[0]->scope_index, i%strip.matrixWidth); // set x
+        if (function_symbol->function_scope->nrOfFormals == 2) // 2D
+          ar->set(function_symbol->function_scope->symbols[1]->scope_index, i/strip.matrixWidth); // set y
 
-          this->callStack->push(ar);
+        this->callStack->push(ar);
 
-          if (!interpret(function_symbol->block, nullptr, global_scope, depth + 1))
-            return false;
+        if (!interpret(function_symbol->block, nullptr, global_scope, depth + 1))
+          return false;
 
-          this->callStack->pop();
-
+        this->callStack->pop();
       }
 
       delete ar; ar = nullptr;
@@ -538,9 +552,17 @@ bool ARTI::loop()
       return false;
     }
   }
-  #if ARTI_PLATFORM != ARTI_ARDUINO
-    strip.frameCounter ++;
-  #endif
+  frameCounter++;
+
+  if (frameCounter == 1)
+    startMillis = millis();
+
+  if (millis() - startMillis > 3000) //startMillis != 0 && logToFile && 
+  {
+    // ERROR_ARTI("time %u\n", millis() - startMillis);
+    closeLog();
+    // startMillis = 0;
+  }
 
   return true;
 } // loop
@@ -640,7 +662,7 @@ uint16_t WS2812FX::mode_customEffect(void)
     // artiWrapper = reinterpret_cast<ArtiWrapper*>(SEGENV.data);
     arti = new ARTI();
 
-    char programFileName[charLength];
+    char programFileName[fileNameLength];
     strcpy(programFileName, "/");
     strcat(programFileName, currentEffect);
     strcat(programFileName, ".wled");
@@ -675,6 +697,7 @@ uint16_t WS2812FX::mode_customEffect(void)
     }
     else 
     {
+      arti->closeLog();
       if (notEnoughHeap && esp_get_free_heap_size() > 20000) {
         ERROR_ARTI("Again enough free heap, restart effect (%u > 30000)\n", esp_get_free_heap_size());
         succesful = true;

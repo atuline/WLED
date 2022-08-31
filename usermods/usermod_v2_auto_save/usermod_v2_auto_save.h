@@ -40,6 +40,7 @@ class AutoSaveUsermod : public Usermod {
     // If we've detected the need to auto save, this will be non zero.
     unsigned long autoSaveAfter = 0;
 
+    uint8_t knownInputLevel = 0;  //WLEDSR
     uint8_t knownBrightness = 0;
     uint8_t knownEffectSpeed = 0;
     uint8_t knownEffectIntensity = 0;
@@ -64,7 +65,7 @@ class AutoSaveUsermod : public Usermod {
         PSTR("~ %02d-%02d %02d:%02d:%02d ~"),
         month(localTime), day(localTime),
         hour(localTime), minute(localTime), second(localTime));
-      savePreset(autoSavePreset, true, presetNameBuffer);
+      savePreset(autoSavePreset, presetNameBuffer);
     }
 
     void inline displayOverlay() {
@@ -88,11 +89,12 @@ class AutoSaveUsermod : public Usermod {
       #endif
       initDone = true;
       if (enabled && applyAutoSaveOnBoot) applyPreset(autoSavePreset);
+      knownInputLevel = inputLevel; //WLEDSR
       knownBrightness = bri;
       knownEffectSpeed = effectSpeed;
       knownEffectIntensity = effectIntensity;
-      knownMode = strip.getMode();
-      knownPalette = strip.getSegment(0).palette;
+      knownMode = strip.getMainSegment().mode;
+      knownPalette = strip.getMainSegment().palette;
     }
 
     // gets called every time WiFi is (re-)connected. Initialize own network
@@ -106,11 +108,14 @@ class AutoSaveUsermod : public Usermod {
       if (!autoSaveAfterSec || !enabled || strip.isUpdating() || currentPreset>0) return;  // setting 0 as autosave seconds disables autosave
 
       unsigned long now = millis();
-      uint8_t currentMode = strip.getMode();
-      uint8_t currentPalette = strip.getSegment(0).palette;
+      uint8_t currentMode = strip.getMainSegment().mode;
+      uint8_t currentPalette = strip.getMainSegment().palette;
 
       unsigned long wouldAutoSaveAfter = now + autoSaveAfterSec*1000;
-      if (knownBrightness != bri) {
+      if ((soundAgc == 0) && (knownInputLevel != inputLevel)) {  //begin WLEDSR
+        knownInputLevel = inputLevel; 
+        autoSaveAfter = wouldAutoSaveAfter; //end WLEDSR
+      } else if (knownBrightness != bri) {
         knownBrightness = bri;
         autoSaveAfter = wouldAutoSaveAfter;
       } else if (knownEffectSpeed != effectSpeed) {

@@ -189,6 +189,7 @@ public:
         bool complete = false;
         for (size_t i = 0; i < strlen_P(json); i++) {
             singleJsonSymbol = pgm_read_byte_near(json + i);
+            if (singleJsonSymbol == '\0') break;
             switch (singleJsonSymbol) {
             case '"':
                 insideQuotes = !insideQuotes;
@@ -200,20 +201,14 @@ public:
             case '[':
                 break;
             case ']':
-                complete = true;
+                if (!insideQuotes) complete = true;
                 break;
             case ',':
-                if (!insideQuotes) {                //WLEDSR(HarryB) added condition to differentiate between comma in mode name or as seperator
-                    modeIndex++;
-                }
+                if (!insideQuotes) modeIndex++;
             default:
-                if (!insideQuotes) {
-                    break;
-                }
+                if (!insideQuotes) break;
             }
-            if (complete) {
-                break;
-            }
+            if (complete) break;
         }
         return modeStrings;
     }

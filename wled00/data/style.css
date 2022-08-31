@@ -7,11 +7,11 @@ body {
   margin: 0;
 }
 hr {
-  border-color: #666;
+	border-color: #666;
 }
 a {
-  color: #28f;
-  text-decoration: none;
+	color: #28f;
+	text-decoration: none;
 }
 button, .btn {
   background: #009FE2;
@@ -26,15 +26,15 @@ button, .btn {
   text-decoration: none;
 }
 .lnk {
-  border: 0;
+	border: 0;
 }
 button.disabled, button[disabled] {
   color: #aaa;
 }
 .helpB {
-  text-align: left;
-  position: absolute;
-  width: 60px;
+	text-align: left;
+	position: absolute;
+	width: 60px;
 }
 input {
   background: #DBDBDB;
@@ -43,33 +43,32 @@ input {
   border: 2px solid #009FE2;
 }
 input:disabled {
-  color: #888;
+	color: #888;
 }
 input[type="number"] {
-  width: 4em;
-  margin: 2px;
+	width: 4em;
+	margin: 2px;
 }
 input[type="number"].xxl {
-  width: 100px;
+	width: 100px;
 }
 input[type="number"].xl {
-  width: 85px;
+	width: 85px;
 }
 input[type="number"].l {
-  width: 63px;
+	width: 63px;
 }
 input[type="number"].m {
-  width: 56px;
+	width: 56px;
 }
 input[type="number"].s {
-  width: 49px;
+	width: 49px;
 }
 input[type="number"].xs {
-  width: 42px;
+	width: 42px;
 }
 input[type="checkbox"] {
-  transform: scale(1.5);
-  margin-right: 10px;
+	transform: scale(1.5);
 }
 select {
   background: #DBDBDB;
@@ -78,12 +77,11 @@ select {
   border: 2px solid #009FE2;
 }
 td {
-  padding: 2px;
+	padding: 2px;
 }
 .d5 {
-  width: 4.5em !important;
+	width: 4.5em !important;
 }
-
 #toast {
 	opacity: 0;
 	background-color: #444;
@@ -97,7 +95,7 @@ td {
 	text-align: center;
 	z-index: 5;
 	transform: translateX(-50%%); /* %% because of AsyncWebServer */
-  max-width: 90%%; /* %% because of AsyncWebServer */
+	max-width: 90%%; /* %% because of AsyncWebServer */
 	left: 50%%; /* %% because of AsyncWebServer */
 }
 

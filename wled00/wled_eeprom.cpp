@@ -142,8 +142,7 @@ void loadSettingsFromEEPROM()
   useAMPM = EEPROM.read(329);
   strip.gammaCorrectBri = EEPROM.read(330);
   strip.gammaCorrectCol = EEPROM.read(331);
-  overlayDefault = EEPROM.read(332);
-  if (lastEEPROMversion < 8 && overlayDefault > 0) overlayDefault--; //overlay mode 1 (solid) was removed
+  overlayCurrent = EEPROM.read(332);
 
   alexaEnabled = EEPROM.read(333);
 
@@ -199,11 +198,6 @@ void loadSettingsFromEEPROM()
     countdownMin = EEPROM.read(2160);
     countdownSec = EEPROM.read(2161);
     setCountdown();
-
-    #ifndef WLED_DISABLE_CRONIXIE
-    readStringFromEEPROM(2165, cronixieDisplay, 6);
-    cronixieBacklight = EEPROM.read(2171);
-    #endif
 
     //macroBoot = EEPROM.read(2175);
     macroAlexaOn = EEPROM.read(2176);
@@ -407,8 +401,6 @@ void loadSettingsFromEEPROM()
 // 3178-3179: ZEROs
 
 // End of Audio Reactive SEGMENT specific read settings
-
-  overlayCurrent = overlayDefault;
 }
 
 
@@ -457,7 +449,7 @@ void deEEP() {
 
         JsonArray colarr = segObj.createNestedArray("col");
 
-        byte numChannels = (strip.isRgbw)? 4:3;
+        byte numChannels = (strip.hasWhiteChannel())? 4:3;
 
         for (uint8_t k = 0; k < 3; k++) //k=0 primary (i+2) k=1 secondary (i+6) k=2 tertiary color (i+12)
         {
@@ -485,11 +477,7 @@ void deEEP() {
             strip.getSegment(j).setOption(SEG_OPTION_ON, 1);
           }
         }
-        setValuesFromMainSeg();
         serializeState(pObj, true, false, true);
-
-        strip.resetSegments();
-        setValuesFromMainSeg();
       }
     }
 
