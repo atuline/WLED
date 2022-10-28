@@ -5,6 +5,18 @@ function gId(s)
 {
   return d.getElementById(s);
 }
+function doHide(s){gId(s).style.display="none";}
+function doShow(s){gId(s).style.display="block";}
+
+function hideALEXA(){gId("aleOnOff").style.display="none";}
+function hideNoALEXA(){gId("aleOnOff2").style.display="none";}
+function hideBLYNK(){gId("blyOnOff").style.display="none";}
+function hideNoBLYNK(){gId("blyOnOff2").style.display="none";}
+function hideMQTT(){gId("mqtOnOff").style.display="none";}
+function hideNoMQTT(){gId("mqtOnOff2").style.display="none";}
+function hideHUE(){gId("hueOnOff").style.display="none";}
+function hideNoHUE(){gId("hueOnOff2").style.display="none";}
+
 function H(){window.open("https://kno.wled.ge/interfaces/udp-notifier/");}
 function B(){window.open("/settings","_self");}
 function adj(){if (d.Sf.DI.value == 6454) {if (d.Sf.DA.value == 1) d.Sf.DA.value = 0; if (d.Sf.EU.value == 1) d.Sf.EU.value = 0;}
