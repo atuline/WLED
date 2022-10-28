@@ -363,18 +363,24 @@ href="https://kno.wled.ge/interfaces/e1.31-dmx/" target="_blank">E1.31 info</a>
 Force max brightness: <input type="checkbox" name="FB"><br>
 Disable realtime gamma correction: <input type="checkbox" name="RG"><br>
 Realtime LED offset: <input name="WO" type="number" min="-255" max="255" 
-required><h3>Alexa Voice Assistant</h3>Emulate Alexa device: <input 
-type="checkbox" name="AL"><br>Alexa invocation name: <input type="text" 
-name="AI" maxlength="32"><h3>Blynk</h3><b>
-Blynk, MQTT and Hue sync all connect to external hosts!<br>
+required><h3>Alexa Voice Assistant</h3><div id="aleOnOff2"><em 
+style="color:#ff8c00">This firmware build does not include Alexa support.<br>
+</em></div><div id="aleOnOff">Emulate Alexa device: <input type="checkbox" 
+name="AL"><br>Alexa invocation name: <input type="text" name="AI" 
+maxlength="32"></div><h3>Blynk</h3><div id="blyOnOff2"><em 
+style="color:#ff8c00">This firmware build does not include Blynk support.<br>
+</em></div><b>Blynk, MQTT and Hue sync all connect to external hosts!<br>
 This may impact the responsiveness of the ESP microcontroller.</b><br>
 For best results, only use one of these services at a time.<br>
-(alternatively, connect a second ESP to them and use the UDP sync)<br><br>Host: 
-<input type="text" name="BH" maxlength="32"> Port: <input name="BP" 
-type="number" min="1" max="65535" value="80" class="d5"><br>Device Auth token: 
-<input name="BK" maxlength="33"><br><i>Clear the token field to disable. </i><a 
-href="https://kno.wled.ge/interfaces/blynk/" target="_blank">Setup info</a><h3>
-MQTT</h3>Enable MQTT: <input type="checkbox" name="MQ"><br>Broker: <input 
+(alternatively, connect a second ESP to them and use the UDP sync)<br><br><div 
+id="blyOnOff">Host: <input type="text" name="BH" maxlength="32"> Port: <input 
+name="BP" type="number" min="1" max="65535" value="80" class="d5"><br>
+Device Auth token: <input name="BK" maxlength="33"><br><i>
+Clear the token field to disable. </i><a 
+href="https://kno.wled.ge/interfaces/blynk/" target="_blank">Setup info</a>
+</div><h3>MQTT</h3><div id="mqtOnOff2"><em style="color:#ff8c00">
+This firmware build does not include MQTT support.<br></em></div><div 
+id="mqtOnOff">Enable MQTT: <input type="checkbox" name="MQ"><br>Broker: <input 
 type="text" name="MS" maxlength="32"> Port: <input name="MQPORT" type="number" 
 min="1" max="65535" class="d5"><br><b>
 The MQTT credentials are sent over an unsecured connection.<br>
@@ -385,8 +391,10 @@ maxlength="40"><br>Device Topic: <input type="text" name="MD" maxlength="32">
 <br>Group Topic: <input type="text" name="MG" maxlength="32"><br>
 Publish on button press: <input type="checkbox" name="BM"><br><i>
 Reboot required to apply changes. </i><a 
-href="https://kno.wled.ge/interfaces/mqtt/" target="_blank">MQTT info</a><h3>
-Philips Hue</h3><i>
+href="https://kno.wled.ge/interfaces/mqtt/" target="_blank">MQTT info</a></div>
+<h3>Philips Hue</h3><div id="hueOnOff2"><em style="color:#ff8c00">
+This firmware build does not include Philips Hue support.<br></em></div><div 
+id="hueOnOff"><i>
 You can find the bridge IP and the light number in the 'About' section of the hue app.
 </i><br>Poll Hue light <input name="HL" type="number" min="1" max="99"> every 
 <input name="HI" type="number" min="100" max="65000"> ms: <input 
@@ -397,14 +405,14 @@ type="number" class="s" min="0" max="255"> . <input name="H1" type="number"
 class="s" min="0" max="255"> . <input name="H2" type="number" class="s" min="0" 
 max="255"> . <input name="H3" type="number" class="s" min="0" max="255"><br><b>
 Press the pushlink button on the bridge, after that save this page!</b><br>
-(when first connecting)<br>Hue status: <span class="sip">Disabled in this build
-</span><h3>Serial</h3>Baud rate: <select name="BD"><option value="1152">115200
-</option><option value="2304">230400</option><option value="4608">460800
-</option><option value="5000">500000</option><option value="5760">576000
-</option><option value="9216">921600</option><option value="10000">1000000
-</option><option value="15000">1500000</option></select><br><i>
-Keep at 115200 to use Improv. Some boards may not support high rates.</i><h3>
-Audio Sync</h3>Mode: <select name="ASE"><option value="0">Disabled</option>
+(when first connecting)<br></div>Hue status: <span class="sip">
+Disabled in this build</span><h3>Serial</h3>Baud rate: <select name="BD"><option
+ value="1152">115200</option><option value="2304">230400</option><option 
+value="4608">460800</option><option value="5000">500000</option><option 
+value="5760">576000</option><option value="9216">921600</option><option 
+value="10000">1000000</option><option value="15000">1500000</option></select>
+<br><i>Keep at 115200 to use Improv. Some boards may not support high rates.</i>
+<h3>Audio Sync</h3>Mode: <select name="ASE"><option value="0">Disabled</option>
 <option value="1">Transmit</option><option value="2">Receive</option></select>
  Port: <input name="ASP" type="number" min="1" max="65535" class="d5"><br><i>
 Reboot required for changes to take effect.</i><hr><button type="button" 
