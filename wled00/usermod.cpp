@@ -26,6 +26,7 @@ void userSetup() {
   disableSoundProcessing = true; // just to be safe
   // Reset I2S peripheral for good measure
   i2s_driver_uninstall(I2S_NUM_0);
+  delay(100); // Give this peripheral time to disable to avoid an indeterminate state.
   periph_module_reset(PERIPH_I2S0_MODULE);
 
   delay(100);         // Give that poor microphone some time to setup.
