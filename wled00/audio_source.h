@@ -463,7 +463,41 @@ public:
 
     void initialize() {
 
-        // check if "analog buttons" are configured for ADC1, and issue warning
+#if IDF_TARGET == esp32
+        // Reset some i2s configuration (possibly redundant as we reset entire
+        // I2S peripheral further down).
+        CLEAR_PERI_REG_MASK(I2S_CONF_REG(0), I2S_RX_START);
+        SET_PERI_REG_MASK(I2S_CONF_REG(0), I2S_RX_RESET);
+        CLEAR_PERI_REG_MASK(I2S_CONF_REG(0), I2S_RX_RESET);
+        CLEAR_PERI_REG_MASK(I2S_CONF2_REG(0), I2S_CAMERA_EN);
+        CLEAR_PERI_REG_MASK(I2S_CONF2_REG(0), I2S_LCD_EN);
+        CLEAR_PERI_REG_MASK(I2S_CONF2_REG(0), I2S_DATA_ENABLE_TEST_EN);
+        CLEAR_PERI_REG_MASK(I2S_CONF2_REG(0), I2S_DATA_ENABLE);
+
+        // Disable i2s clock
+        DPORT_CLEAR_PERI_REG_MASK(DPORT_PERIP_CLK_EN_REG, DPORT_I2S0_CLK_EN);
+
+        // Restore SYSCON mode registers
+        CLEAR_PERI_REG_MASK(SENS_SAR_READ_CTRL_REG, SENS_SAR1_DIG_FORCE);
+        CLEAR_PERI_REG_MASK(SENS_SAR_READ_CTRL2_REG, SENS_SAR2_DIG_FORCE);
+
+        // Restore SAR ADC mode
+        CLEAR_PERI_REG_MASK(SENS_SAR_START_FORCE_REG, SENS_SAR2_EN_TEST);
+        CLEAR_PERI_REG_MASK(SYSCON_SARADC_CTRL_REG, SYSCON_SARADC_SAR2_MUX
+                            | SYSCON_SARADC_SAR_SEL | SYSCON_SARADC_DATA_TO_I2S);
+        SET_PERI_REG_BITS(SENS_SAR_MEAS_WAIT2_REG, SENS_FORCE_XPD_SAR, 0, SENS_FORCE_XPD_SAR_S);
+        SET_PERI_REG_BITS(SYSCON_SARADC_FSM_REG, SYSCON_SARADC_START_WAIT, 8, SYSCON_SARADC_START_WAIT_S);
+
+        // Reset i2s peripheral
+        DPORT_SET_PERI_REG_MASK(DPORT_PERIP_RST_EN_REG, DPORT_I2S0_RST);
+        DPORT_CLEAR_PERI_REG_MASK(DPORT_PERIP_RST_EN_REG, DPORT_I2S0_RST);
+
+        // Disable pull supply voltage to SAR ADC
+        CLEAR_PERI_REG_MASK(RTC_CNTL_TEST_MUX_REG, RTC_CNTL_ENT_RTC);
+        SET_PERI_REG_BITS(RTC_CNTL_TEST_MUX_REG, RTC_CNTL_DTEST_RTC, 0, RTC_CNTL_DTEST_RTC_S);
+#endif	    
+
+	// check if "analog buttons" are configured for ADC1, and issue warning
         for (int b=0; b<WLED_MAX_BUTTONS; b++) {
             //if ((btnPin[b] >= 0) && (buttonType[b] == BTN_TYPE_ANALOG || buttonType[b] == BTN_TYPE_ANALOG_INVERTED) && (digitalPinToAnalogChannel(btnPin[b]) < 10)) {
             if ((btnPin[b] >= 0) && (buttonType[b] == BTN_TYPE_ANALOG || buttonType[b] == BTN_TYPE_ANALOG_INVERTED) && (digitalPinToAnalogChannel(btnPin[b]) >= 0)) {
