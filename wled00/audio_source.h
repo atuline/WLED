@@ -9,6 +9,11 @@
 #include <driver/adc_types_deprecated.h>
 #endif
 
+#include "soc/rtc_cntl_reg.h"
+#include "soc/sens_reg.h"
+#include "soc/syscon_reg.h"
+#include "soc/i2s_reg.h"
+
 //#include <driver/i2s_std.h>
 //#include <driver/i2s_pdm.h>
 //#include <driver/gpio.h>
