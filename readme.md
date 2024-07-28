@@ -10,9 +10,17 @@
 
   </p>
 
+<hr/>
+
+# WARNING - Archived Project
+> [!CAUTION]
+> The WLED-SR project is no longer under active development, this repo is only for historical reference and bugfixes
+
+The MoonModules fork of WLED (WLED-MM) can be found here https://github.com/MoonModules/WLED
+
 # Stable Branch
 
-This is the SR `main` branch - the source code for our latest release [version WLED-SR v0.13.4](https://github.com/atuline/WLED/releases). This branch can be a stable baseline for your own project.
+This is the SR `main` branch - the source code for our latest release [version WLED-SR v0.13.4](https://github.com/atuline/WLED/releases).
 
 - For ESP32 devices only (8266 no longer supported).
 - ESP32-S2, ESP32-S3 and ESP32-C3 are not supported by this fork. Please look into the [MoonModules WLED fork](https://github.com/MoonModules/WLED) if you have one of these boards.
@@ -35,12 +43,6 @@ Welcome to our Sound Reactive fork of WLED. In addition to the features of WLED 
 - 2D settings for ESP32 devices.
 - Frequency reactive sliders for ESP32 devices.
 
-We currently have 3 active forks for our Sound Reactive WLED. They are:
-
-- [ESP32 standard version (ESP8266 is no longer supported)](https://github.com/atuline/WLED)
-- [ESP32 development version (ESP8266 is no longer supported)](https://github.com/atuline/WLED/tree/dev)
-- [ESP8266 version (No longer supported. WILL NOT receive regular updates)](https://github.com/atuline/WLED/tree/ESP8266)
-
 In addition, we have a [Sound Reactive WLED Wiki](https://github.com/atuline/WLED/wiki).
 
 Join Discord to discuss beta testing of our sound reactive fork of WLED:
@@ -53,75 +55,7 @@ Join Discord to discuss AirCookie's WLED:
 <a href="https://discord.gg/KuqP7NE"><img src="https://discordapp.com/api/guilds/473448917040758787/widget.png?style=banner2" width="25%"></a>
 
 
-
-And now onto regular WLED . . .
-
-
-
-# Welcome to my project WLED! ✨
-
-A fast and feature-rich implementation of an ESP8266/ESP32 webserver to control NeoPixel (WS2812B, WS2811, SK6812) LEDs or also SPI based chipsets like the WS2801 and APA102!
-
-## ⚙️ Features
-- WS2812FX library integrated for over 100 special effects
-- FastLED noise effects and 50 palettes
-- Modern UI with color, effect and segment controls
-- Segments to set different effects and colors to parts of the LEDs
-- Settings page - configuration over network
-- Access Point and station mode - automatic failsafe AP
-- Up to 10 LED outputs per instance
-- Support for RGBW strips
-- Up to 250 user presets to save and load colors/effects easily, supports cycling through them.
-- Presets can be used to automatically execute API calls
-- Nightlight function (gradually dims down)
-- Full OTA software updatability (HTTP + ArduinoOTA), password protectable
-- Configurable analog clock (Cronixie, 7-segment and EleksTube IPS clock support via usermods)
-- Configurable Auto Brightness limit for safer operation
-- Filesystem-based config for easier backup of presets and settings
-
-## 💡 Supported light control interfaces
-- WLED app for [Android](https://play.google.com/store/apps/details?id=com.aircoookie.WLED) and [iOS](https://apps.apple.com/us/app/wled/id1475695033)
-- JSON and HTTP request APIs
-- MQTT
-- Blynk IoT
-- E1.31, Art-Net, DDP and TPM2.net
-- [diyHue](https://github.com/diyhue/diyHue) (Wled is supported by diyHue, including Hue Sync Entertainment under udp. Thanks to [Gregory Mallios](https://github.com/gmallios))
-- [Hyperion](https://github.com/hyperion-project/hyperion.ng)
-- UDP realtime
-- Alexa voice control (including dimming and color)
-- Sync to Philips hue lights
-- Adalight (PC ambilight via serial) and TPM2
-- Sync color of multiple WLED devices (UDP notifier)
-- Infrared remotes (24-key RGB, receiver required)
-- Simple timers/schedules (time from NTP, timezones/DST supported)
-
-## 📲 Quick start guide and documentation
-
-See the [documentation on our official site](https://kno.wled.ge)!
-
-[On this page](https://kno.wled.ge/basics/tutorials/) you can find excellent tutorials made by the community and helpful tools to help you get your new lamp up and running!
-
-## 🖼️ User interface
-<img src="/images/macbook-pro-space-gray-on-the-wooden-table.jpg" width="50%"><img src="/images/walking-with-iphone-x.jpg" width="50%">
-
-## 💾 Compatible hardware
-
-See [here](https://kno.wled.ge/basics/compatible-hardware)!
-
-## ✌️ Other
-
-WLED-SR is based on WLED 0.13.3
-Credits [here](https://kno.wled.ge/about/contributors/)!
-
 WLED-SR specific changes and enhancements require the GPLv3 license.
-
-Join the Discord server to discuss everything about WLED!
-
-<a href="https://discord.gg/KuqP7NE"><img src="https://discordapp.com/api/guilds/473448917040758787/widget.png?style=banner2" width="25%"></a>
-
-Check out the WLED [Discourse forum](https://wled.discourse.group)!
-You can also send me mails to [dev.aircoookie@gmail.com](mailto:dev.aircoookie@gmail.com), but please only do so if you want to talk to me privately.
-If WLED really brightens up your every day, you can [![](https://img.shields.io/badge/send%20me%20a%20small%20gift-paypal-blue.svg?style=flat-square)](https://paypal.me/aircoookie)
 
 
 *Disclaimer:*
